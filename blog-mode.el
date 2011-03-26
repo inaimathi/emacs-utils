@@ -12,7 +12,8 @@
     (define-key map "\C-cq" 'insert-quote)
     (define-key map "\C-cs" 'insert-sig)
     (define-key map "\C-cf" 'insert-footnote)
-
+    (define-key map "\C-ce" 'insert-edit)
+    
     (define-key map "\C-c\C-l" 'region-to-link)
     (define-key map "\C-c\C-p" 'region-to-code-block)
     (define-key map "\C-c\C-c" 'region-to-inline-code)
@@ -20,6 +21,7 @@
     (define-key map "\C-c\C-q" 'region-to-quote)
     (define-key map "\C-c\C-s" 'region-to-sig)
     (define-key map "\C-c\C-f" 'region-to-footnote)
+    (define-key map "\C-c\C-e" 'region-to-edit)
 
     (define-key map "/" 'smart-backslash)
     (setq blog-mode-map map)))
@@ -30,61 +32,80 @@
   " Blog"
   (use-local-map blog-mode-map))
 
+(defgroup blog-mode nil
+  "Additions to Emacs git mode"
+  :group 'editing)
+
+(defcustom blog-footnote-header "<hr />\n<h5>Footnotes</h5>"
+  "The string used to delimit footnotes from the rest of the blog post. 
+   If you change this, make it something fairly unique or you'll run into obvious trouble."
+  :group 'blog-mode)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; simple definitions
-(defun insert-tag (start-tag &optional end-tag)
-  "Inserts a tag at point"
-  (interactive)
-  (insert start-tag)
-  (save-excursion
-    (insert (or end-tag ""))))
-
-(defun wrap-region (start end start-tag &optional end-tag)
-  "Inserts end tag at the end of the region, and start tag at point"
-  (goto-char end)
-  (insert (or end-tag ""))
-  (goto-char start)
-  (insert start-tag))
-
 (defmacro definsert (tag-name start-tag end-tag)
-  "Defines insert function."
+  "Defines function to insert tag surrounding point."
   `(defun ,(make-symbol (concat "insert-" (symbol-name tag-name))) ()
      (interactive)
-     (insert-tag ,start-tag ,end-tag)))
+     (insert ,start-tag)
+     (save-excursion (insert ,end-tag))))
 
 (defmacro defregion (tag-name start-tag end-tag)
   "Defines region wrapper function."
   `(defun ,(make-symbol (concat "region-to-" (symbol-name tag-name))) ()
      (interactive)
-     (wrap-region (region-beginning) (region-end) ,start-tag ,end-tag)))
+     (goto-char (region-end))
+     (insert ,end-tag)
+     (goto-char (region-beginning))
+     (insert ,start-tag)
 
-(definsert link (concat "<a href=\"" (x-get-clipboard) "\">") "</a>")
-(defregion link (concat "<a href=\"" (x-get-clipboard) "\">") "</a>")
-(definsert bold "<b>" "</b>")
-(defregion bold "<b>" "</b>")
-(definsert quote "<blockquote>" "</blockquote>")
-(defregion quote "<blockquote>" "</blockquote>")
-(definsert sig "<span class=\"sig\">" "</span>")
-(defregion sig "<span class=\"sig\">" "</span>")
+(defmacro deftag (tag-name start-tag end-tag)
+  "Shortcut for tags that have standard defregion and definsert definitions"
+  `(progn
+     (defregion ,tag-name ,start-tag ,end-tag)
+     (definsert ,tag-name ,start-tag ,end-tag)))
+
+(deftag link (concat "<a href=\"" (x-get-clipboard) "\">") "</a>")
+(deftag bold "<b>" "</b>")
+(deftag quote "<blockquote>" "</blockquote>")
+(deftag sig "<span class=\"sig\">" "</span>")
+(deftag edit "<span class=\"edit\">" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; <pre> and <code> definitions
 (definsert code-block "<pre>" "</pre>")
 (definsert inline-code "<code>" "</code>")
 
 ;; region versions are more complicated to accomodate htmlize
-(defun region-to-inline-code ()
+(defun region-to-inline-code (code-mode)
   "HTMLize just the current region and wrap it in a <code> block"
-  (interactive)
-  (let((htmlified (substring (htmlize-region-for-paste (region-beginning) (region-end)) 6 -6)))
-    (delete-region (region-beginning) (region-end))
+  (interactive "CMode name: ")
+  (let* ((start (region-beginning))
+	 (end (region-end))
+	 (htmlified (get-htmlified-region start end code-mode)))
+    (delete-region start end)
     (insert-inline-code)
     (insert htmlified)))
 
-(defun region-to-code-block ()
+(defun region-to-code-block (code-mode)
   "HTMLize the current region and wrap it in a <pre> block"
-  (interactive)
-  (let ((htmlified (htmlize-region-for-paste (region-beginning) (region-end))))
-    (delete-region (region-beginning) (region-end))
-    (insert (concat "<pre>" (substring htmlified 6)))))
+  (interactive "CMode name: ")
+  (let* ((start (region-beginning))
+	 (end (region-end))
+	 (result (get-htmlified-region start end code-mode)))
+    (delete-region start end)
+    (insert-code-block)
+    (insert result)))
+
+(defun get-htmlified-region (start end code-mode)
+  "Returns a string of the current region HTMLized with highlighting according to code-mode"
+  (let ((htmlified nil))
+    (clipboard-kill-ring-save start end)
+    (get-buffer-create "*blog-mode-temp*") ;;using 'with-temp-buffer here doesn't apply correct higlighting
+    (with-current-buffer "*blog-mode-temp*"
+      (funcall code-mode)
+      (clipboard-yank)
+      (setq htmlified (substring (htmlize-region-for-paste (point-min) (point-max)) 6 -6)))
+    (kill-buffer "*blog-mode-temp*")
+    htmlified))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; footnote definitions
 (defun insert-footnote ()
@@ -92,27 +113,39 @@
    Moves point to footnote location."
   (interactive)
   (progn (footnotes-header)
-	 (let ((footnote-name (format-time-string "%a-%b-%d-%H%M%S%Z-%Y" (current-time))))
-	   (insert "<a href=\"#foot-" footnote-name "\" name=\"note-" footnote-name "\">[note]</a>")
+	 (let ((footnote-name (format-time-string "%a-%b-%d-%H%M%S%Z-%Y" (current-time)))
+	       (num (number-to-string (+ 1 (count-footnotes)))))
+	   (insert "<a href=\"#foot-" footnote-name "\" name=\"note-" footnote-name "\">[" num "]</a>")
 	   (goto-char (point-max))
-	   (insert "\n\n<a href=\"#note-" footnote-name "\" name=\"foot-" footnote-name "\">[back]</a> - "))))
+	   (insert "\n\n" num " - <a href=\"#note-" footnote-name "\" name=\"foot-" footnote-name "\">[back]</a> - "))))
 
 (defun region-to-footnote ()
   "Inserts a footnote at point and return link at the bottom. Moves the current region to the end of the file. 
    Leaves point where it is."
   (interactive)
   (save-excursion (kill-region (region-beginning) (region-end))
-		  (insert-footnote)
-		  (yank)))
+	 (insert-footnote)
+	 (yank)))
 
 (defun footnotes-header ()
   "Inserts footnote header if not already present"
-  (unless (save-excursion (search-forward "<hr />\n<h5>Footnotes</h5>" nil t))
+  (unless (save-excursion (search-forward blog-footnote-header nil t))
     (save-excursion 
       (goto-char (point-max))
-      (insert "\n\n<hr />\n<h5>Footnotes</h5>"))))
+      (insert "\n\n" blog-footnote-header))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; utility
+(defun count-footnotes ()
+  "Returns the number of footnotes in the current file. Used for human-readable note labels"
+  (interactive)
+  (save-excursion
+    (if (not (search-forward blog-footnote-header nil t))
+	0
+      (let ((count -1))
+	(while (progn (setq count (1+ count))
+		      (search-forward "<a href=\"#note-" nil t)))
+	count))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; utility and general primitives
 (defun smart-backslash ()
   "Backslash closes previous tag when used in the combination </. Self-inserts otherwise."
   (interactive)

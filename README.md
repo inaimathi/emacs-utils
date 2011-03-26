@@ -3,31 +3,41 @@ My Emacs Utils
 
 These are my personal utilities. They're made to be relatively easy to use, but ease of installation was not considered (they were created to solve minor annoyances I had with my workflow). Use them if you can, fork them if you like; this repo is released under the GPL3.
 
-# Tagariffic
-
-### Summary
-
-Shortcuts for visiting and creating etags tables.
-
 ### Usage 
 
-Put the `tagariffic.el` file somewhere in your load-path, add `(require 'tagariffic)` and 
+Put the folder somewhere in your load path, and require the desired modules in your `.emacs`. I also add `(add-hook 'html-mode-hook 'blog-mode)` (since I always want `blog-mode` on when I'm editing HTML) and add `tagariffic` to any mode-hooks that might use it. The require statements are
 
-    (global-set-key (kbd "C-.") 'visit-tags-table)
-    (global-set-key (kbd "C->") 'create-tag-table)
-    
-to your `.emacs` file. 
+ - `(require 'tagariffic)`
+ - `(require blog-mode)`
+ - `(require git-custom)`
 
-Tagging Haskell files assumes you have [hasktags](http://hackage.haskell.org/package/hasktags) installed.
+### Dependencies
+
+`git-custom` assumes you have Emacs' git mode included which comes with the `git-core` debian package. In order to include it, you need to add `"/usr/share/doc/git-core/contrib/emacs"` to your load-path and add `(require 'git)` to your `.emacs`.
+
+`tagariffic` works without dependencies, but can't tag Haskell projects unless you have [hasktags](http://hackage.haskell.org/package/hasktags) installed.
+
+`blog-mode` works without dependencies, but can't format code for you unless you have [htmlize](http://www.emacswiki.org/emacs/Htmlize) installed and included. It also uses `x-get-clipboard` to format link addresses (so you'll need to tweak it if you're a windows or OS X user).
+
+# Tagariffic
+
+#### Shortcuts for visiting and creating etags tables.
+
+Adds a minor mode with two keybindings, `C-.` and `C->`. They allow you to manage your tags files more easily for given projects. As it stands, they only tag one language type at a time (I don't typically work in projects with multiple heavily-used languages, so I only need to tag the primary one).
 
 # blog-mode
 
-### Summary
+#### Editing shortcuts for blogging. Highlights are the link, code and footnote generators.
 
-Editing shortcuts for blogging. Highlights are the link, code and footnote generators.
+Minor mode that adds a number of keyboard shortcuts for inserting/regioning various tags. It also manages linked footnotes automatically.
 
-### Usage
+# git-custom
 
-Put the `blog-mode.el` file somewhere in your load-path and add `(require 'blog-mode)` to your `.emacs`. I also like to add `(add-hook 'html-mode-hook 'blog-mode)`, and `byte-compile-file` it.
+#### Usage shortcuts for Emacs' git interface (they may be obsolete by now, I haven't been keeping up with the git-mode development)
 
-Code blocks assume you have [htmlize](http://www.emacswiki.org/emacs/Htmlize) installed (`blog-mode` requires it though, so you just need to have the file in your load-path). The link generator assumes that the latest contents of your clipboard is what you want as the `href`, but it does this via `x-get-clipboard`, which means it won't work as written on Windows (not sure about OS X, but I doubt it). Works for me since I use Linux everywhere these days, but you may look through your `M-x apropos clipboard` to find the correct function.
+A few customizations from the standard `git-mode` for my ease of use. It may be obsolete; I haven't been keeping up with git-mode development. It deal with stuff that was unsupported at the time I wrote it, or was supported but had poor or overly general UI. The list includes 
+
+ - push/pull/fetch/dcommit
+ - branching/merging
+ - log/diff/diff completions
+ - directory manipulation (specifically, a recursive `git-add`, so that directories are shakily supported)

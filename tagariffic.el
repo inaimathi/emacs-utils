@@ -1,3 +1,18 @@
+(defvar tagariffic-mode-map nil
+  "Keymap for blog minor mode")
+
+(unless tagariffic-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-.") 'visit-tags-table)
+    (define-key map (kbd "C->") 'create-tag-table)
+    (setq tagariffic-mode-map map)))
+
+(define-minor-mode tagariffic-mode
+  "This is a collection of functions for generating and using TAGS tables"
+  nil
+  " tag"
+  (use-local-map tagariffic-mode-map))
+
 (defun create-tag-table ()
   "This will recursively tag all files of a given type starting with the current buffers' directory. 
    It overwrites the old TAGS file, if one exists. 
