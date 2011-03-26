@@ -102,8 +102,8 @@
    Leaves point where it is."
   (interactive)
   (save-excursion (kill-region (region-beginning) (region-end))
-	 (insert-footnote)
-	 (yank)))
+		  (insert-footnote)
+		  (yank)))
 
 (defun footnotes-header ()
   "Inserts footnote header if not already present"
