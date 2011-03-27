@@ -56,7 +56,7 @@
      (goto-char (region-end))
      (insert ,end-tag)
      (goto-char (region-beginning))
-     (insert ,start-tag)
+     (insert ,start-tag)))
 
 (defmacro deftag (tag-name start-tag end-tag)
   "Shortcut for tags that have standard defregion and definsert definitions"
@@ -78,30 +78,28 @@
 (defun region-to-inline-code (code-mode)
   "HTMLize just the current region and wrap it in a <code> block"
   (interactive "CMode name: ")
-  (let* ((start (region-beginning))
-	 (end (region-end))
-	 (htmlified (get-htmlified-region start end code-mode)))
-    (delete-region start end)
-    (insert-inline-code)
-    (insert htmlified)))
+  (htmlized-region code-mode #'insert-inline-code))
 
 (defun region-to-code-block (code-mode)
   "HTMLize the current region and wrap it in a <pre> block"
   (interactive "CMode name: ")
+  (htmlized-region code-mode #'insert-code-block))
+
+(defun htmlized-region (code-mode insert-fn)
   (let* ((start (region-beginning))
 	 (end (region-end))
 	 (result (get-htmlified-region start end code-mode)))
     (delete-region start end)
-    (insert-code-block)
+    (funcall insert-fn)
     (insert result)))
 
-(defun get-htmlified-region (start end code-mode)
+(defun get-htmlified-region (start end &optional code-mode)
   "Returns a string of the current region HTMLized with highlighting according to code-mode"
   (let ((htmlified nil))
     (clipboard-kill-ring-save start end)
     (get-buffer-create "*blog-mode-temp*") ;;using 'with-temp-buffer here doesn't apply correct higlighting
     (with-current-buffer "*blog-mode-temp*"
-      (funcall code-mode)
+      (if (fboundp code-mode) (funcall code-mode))
       (clipboard-yank)
       (setq htmlified (substring (htmlize-region-for-paste (point-min) (point-max)) 6 -6)))
     (kill-buffer "*blog-mode-temp*")
