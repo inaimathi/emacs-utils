@@ -68,7 +68,7 @@
 (deftag bold "<b>" "</b>")
 (deftag quote "<blockquote>" "</blockquote>")
 (deftag sig "<span class=\"sig\">" "</span>")
-(deftag edit "<span class=\"edit\">" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
+(deftag edit "<span class=\"edit\">EDIT:\n\n" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; <pre> and <code> definitions
 (definsert code-block "<pre>" "</pre>")
