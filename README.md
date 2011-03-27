@@ -8,8 +8,8 @@ These are my personal utilities. They're made to be relatively easy to use, but 
 Put the folder somewhere in your load path, and require the desired modules in your `.emacs`. I also add `(add-hook 'html-mode-hook 'blog-mode)` (since I always want `blog-mode` on when I'm editing HTML) and add `tagariffic` to any mode-hooks that might use it. The require statements are
 
  - `(require 'tagariffic)`
- - `(require blog-mode)`
- - `(require git-custom)`
+ - `(require 'blog-mode)`
+ - `(require 'git-custom)`
 
 ### Dependencies
 
@@ -19,7 +19,7 @@ Put the folder somewhere in your load path, and require the desired modules in y
 
 `blog-mode` works without dependencies, but can't format code for you unless you have [htmlize](http://www.emacswiki.org/emacs/Htmlize) installed and included. It also uses `x-get-clipboard` to format link addresses (so you'll need to tweak it if you're a windows or OS X user).
 
-# Tagariffic
+# tagariffic
 
 #### Shortcuts for visiting and creating etags tables.
 
