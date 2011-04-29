@@ -35,7 +35,7 @@ Minor mode that adds a number of keyboard shortcuts for inserting/regioning vari
 
 #### Usage shortcuts for Emacs' git interface (they may be obsolete by now, I haven't been keeping up with the git-mode development)
 
-A few customizations from the standard `git-mode` for my ease of use. It may be obsolete; I haven't been keeping up with git-mode development. It deal with stuff that was unsupported at the time I wrote it, or was supported but had poor or overly general UI. The list includes 
+A few customizations from the standard `git-mode` for my ease of use. It may be obsolete; I haven't been keeping up with git-mode development. It deals with stuff that was unsupported at the time I wrote it, or was supported but had poor or overly general UI. The list includes 
 
  - push/pull/fetch/dcommit
  - branching/merging

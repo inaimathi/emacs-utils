@@ -9,6 +9,7 @@
     (define-key map "\C-cp" 'insert-code-block)
     (define-key map "\C-cc" 'insert-inline-code)
     (define-key map "\C-cb" 'insert-bold)
+    (define-key map "\C-ci" 'insert-italic)
     (define-key map "\C-cq" 'insert-quote)
     (define-key map "\C-cs" 'insert-sig)
     (define-key map "\C-cf" 'insert-footnote)
@@ -18,11 +19,13 @@
     (define-key map "\C-c\C-p" 'region-to-code-block)
     (define-key map "\C-c\C-c" 'region-to-inline-code)
     (define-key map "\C-c\C-b" 'region-to-bold)
+    (define-key map "\C-c\C-i" 'region-to-italic)
     (define-key map "\C-c\C-q" 'region-to-quote)
     (define-key map "\C-c\C-s" 'region-to-sig)
     (define-key map "\C-c\C-f" 'region-to-footnote)
     (define-key map "\C-c\C-e" 'region-to-edit)
 
+    (define-key map "\C-cg" 'html-escape-region)
     (define-key map "/" 'smart-backslash)
     (setq blog-mode-map map)))
 
@@ -66,6 +69,7 @@
 
 (deftag link (concat "<a href=\"" (x-get-clipboard) "\">") "</a>")
 (deftag bold "<b>" "</b>")
+(deftag italic "<i>" "</i>")
 (deftag quote "<blockquote>" "</blockquote>")
 (deftag sig "<span class=\"sig\">" "</span>")
 (deftag edit "<span class=\"edit\">EDIT:\n\n" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
@@ -92,18 +96,6 @@
     (delete-region start end)
     (funcall insert-fn)
     (insert result)))
-
-(defun get-htmlified-region (start end &optional code-mode)
-  "Returns a string of the current region HTMLized with highlighting according to code-mode"
-  (let ((htmlified nil))
-    (clipboard-kill-ring-save start end)
-    (get-buffer-create "*blog-mode-temp*") ;;using 'with-temp-buffer here doesn't apply correct higlighting
-    (with-current-buffer "*blog-mode-temp*"
-      (if (fboundp code-mode) (funcall code-mode))
-      (clipboard-yank)
-      (setq htmlified (substring (htmlize-region-for-paste (point-min) (point-max)) 6 -6)))
-    (kill-buffer "*blog-mode-temp*")
-    htmlified))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; footnote definitions
 (defun insert-footnote ()
@@ -151,5 +143,25 @@
       (progn (backward-delete-char 1)
 	     (sgml-close-tag))
     (insert "/")))
+
+(defun html-escape-region ()
+  "Function mostly used for escaping .DOCs from marketing for use in HTML"
+  (interactive)
+  (htmlized-region nil #'insert))
+
+(defun get-htmlified-region (start end &optional code-mode)
+  "Returns a string of the current region HTMLized with highlighting according to code-mode"
+  (let ((htmlified nil))
+    (clipboard-kill-ring-save start end)
+    (get-buffer-create "*blog-mode-temp*") ;;using 'with-temp-buffer here doesn't apply correct higlighting
+    (with-current-buffer "*blog-mode-temp*"
+      (when (fboundp code-mode) (funcall code-mode))
+      (clipboard-yank)
+      (unless code-mode 
+	(fundamental-mode)
+	(font-lock-fontify-buffer))
+      (setq htmlified (substring (htmlize-region-for-paste (point-min) (point-max)) 6 -6)))
+    (kill-buffer "*blog-mode-temp*")
+    htmlified))
 
 (provide 'blog-mode)
