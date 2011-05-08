@@ -1,33 +1,33 @@
 (require 'htmlize)
+(require 'convenience)
 
 (defvar blog-mode-map nil
   "Keymap for blog minor mode")
 
-(unless blog-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-cl" 'insert-link)
-    (define-key map "\C-cp" 'insert-code-block)
-    (define-key map "\C-cc" 'insert-inline-code)
-    (define-key map "\C-cb" 'insert-bold)
-    (define-key map "\C-ci" 'insert-italic)
-    (define-key map "\C-cq" 'insert-quote)
-    (define-key map "\C-cs" 'insert-sig)
-    (define-key map "\C-cf" 'insert-footnote)
-    (define-key map "\C-ce" 'insert-edit)
-    
-    (define-key map "\C-c\C-l" 'region-to-link)
-    (define-key map "\C-c\C-p" 'region-to-code-block)
-    (define-key map "\C-c\C-c" 'region-to-inline-code)
-    (define-key map "\C-c\C-b" 'region-to-bold)
-    (define-key map "\C-c\C-i" 'region-to-italic)
-    (define-key map "\C-c\C-q" 'region-to-quote)
-    (define-key map "\C-c\C-s" 'region-to-sig)
-    (define-key map "\C-c\C-f" 'region-to-footnote)
-    (define-key map "\C-c\C-e" 'region-to-edit)
+(def-sparse-map blog-mode-map
+  "C-c l" insert-link
+  "C-c p" insert-code-block
+  "C-c c" insert-inline-code
+  "C-c b" insert-bold
+  "C-c i" insert-italic
+  "C-c q" insert-quote
+  "C-c s" insert-sig
+  "C-c f" insert-footnote
+  "C-c e" insert-edit
+  
+  "C-c C-l" region-to-link
+  "C-c C-p" region-to-code-block
+  "C-c C-c" region-to-inline-code
+  "C-c C-b" region-to-bold
+  "C-c C-i" region-to-italic
+  "C-c C-q" region-to-quote
+  "C-c C-s" region-to-sig
+  "C-c C-f" region-to-footnote
+  "C-c C-e" region-to-edit
 
-    (define-key map "\C-cg" 'html-escape-region)
-    (define-key map "/" 'smart-backslash)
-    (setq blog-mode-map map)))
+  "C-c g" html-escape-region
+  "/" smart-backslash)
+
 
 (define-minor-mode blog-mode
   "This is a collection of useful keyboard macros for editing Langnostic"
@@ -56,10 +56,12 @@
   "Defines region wrapper function."
   `(defun ,(make-symbol (concat "region-to-" (symbol-name tag-name))) ()
      (interactive)
-     (goto-char (region-end))
-     (insert ,end-tag)
-     (goto-char (region-beginning))
-     (insert ,start-tag)))
+     (let ((start (region-beginning))
+	   (end (region-end)))
+       (goto-char end)
+       (insert ,end-tag)
+       (goto-char start)
+       (insert ,start-tag))))
 
 (defmacro deftag (tag-name start-tag end-tag)
   "Shortcut for tags that have standard defregion and definsert definitions"
@@ -114,8 +116,8 @@
    Leaves point where it is."
   (interactive)
   (save-excursion (kill-region (region-beginning) (region-end))
-	 (insert-footnote)
-	 (yank)))
+		  (insert-footnote)
+		  (yank)))
 
 (defun footnotes-header ()
   "Inserts footnote header if not already present"
