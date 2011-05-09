@@ -1,3 +1,5 @@
+(require 'cl)
+
 ;;Addendum to the built-in GIT library for Emacs
 (add-hook 'git-status-mode-hook
 	  (lambda () 
