@@ -5,19 +5,21 @@ These are my personal utilities. They're made to be relatively easy to use, but 
 
 ### Usage 
 
-Put the folder somewhere in your load path, and require the desired modules in your `.emacs`. I also add `(add-hook 'html-mode-hook 'blog-mode)` (since I always want `blog-mode` on when I'm editing HTML) and add `tagariffic` to any mode-hooks that might use it. The require statements are
+Put the folder somewhere in your load path, `byte-compile-file` them, and require the desired modules in your `.emacs`. I also add `(add-hook 'html-mode-hook 'blog-mode)` (since I always want `blog-mode` on when I'm editing HTML) and add `tagariffic` to any mode-hooks that might use it. The require statements are
 
  - `(require 'tagariffic)`
  - `(require 'blog-mode)`
  - `(require 'git-custom)`
-
+ - `(require 'convenience)` (this is included with blog-mode)
 ### Dependencies
 
-`git-custom` assumes you have Emacs' git mode included which comes with the `git-core` debian package. In order to include it, you need to add `"/usr/share/doc/git-core/contrib/emacs"` to your load-path and add `(require 'git)` to your `.emacs`.
+`git-custom` assumes you have Emacs' git mode included which comes with the `git-core` debian package. In order to include it, you need to add `"/usr/share/doc/git-core/contrib/emacs"` to your load-path and add `(require 'git)` to your `.emacs`. It also assumes you have the `cl` package (but `require`s it itself); this is a port of certain Common Lisp utilities that comes with recent versions of Emacs.
 
 `tagariffic` works without dependencies, but can't tag Haskell projects unless you have [hasktags](http://hackage.haskell.org/package/hasktags) installed.
 
-`blog-mode` works without dependencies, but can't format code for you unless you have [htmlize](http://www.emacswiki.org/emacs/Htmlize) installed and included. It also uses `x-get-clipboard` to format link addresses (so you'll need to tweak it if you're a windows or OS X user).
+`blog-mode` works without dependencies, but can't format code for you unless you have [htmlize](http://www.emacswiki.org/emacs/Htmlize) installed and included. It also uses `x-get-clipboard` to format link addresses (so you'll need to tweak it if you're a windows or OS X user). It also assumes you have the `convenience` package from this repo in your load path.
+
+`convenience` assumes you have the `cl` package. It isn't actually a mode, but rather convenience functions for writing modes. It includes an elisp-macroexpander, word/character counters and shorthand macros for keymap/global mode definitions
 
 # tagariffic
 
