@@ -37,13 +37,8 @@
 				    dirs)) 
 			  hosts)))
 
-(defun filter (predicate lst &optional acc)
-  (cond ((not lst) (reverse acc))
-	((funcall predicate (car lst)) (filter predicate (cdr lst) (cons (car lst) acc)))
-	(t (filter predicate (cdr lst) acc))))
-
 (defvar git-pull-completion 
-  (let ((local-dirs (append additional-directories (filter (lambda (n) (file-directory-p (concat project-directory n))) (directory-files project-directory nil "^[^.#%A-Z]")))))
+  (let ((local-dirs (append additional-directories (remove-if-not (lambda (n) (file-directory-p (concat project-directory n))) (directory-files project-directory nil "^[^.#%A-Z]")))))
     (append (list "master" "backup")
 	    (combine machine-addresses local-dirs)
 	    (combine github-addresses (mapcar (lambda (d) (concat d ".git")) local-dirs) ""))))
