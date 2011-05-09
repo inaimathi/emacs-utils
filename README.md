@@ -11,6 +11,7 @@ Put the folder somewhere in your load path, `byte-compile-file` them, and requir
  - `(require 'blog-mode)`
  - `(require 'git-custom)`
  - `(require 'convenience)` (this is included with blog-mode)
+
 ### Dependencies
 
 `git-custom` assumes you have Emacs' git mode included which comes with the `git-core` debian package. In order to include it, you need to add `"/usr/share/doc/git-core/contrib/emacs"` to your load-path and add `(require 'git)` to your `.emacs`. It also assumes you have the `cl` package (but `require`s it itself); this is a port of certain Common Lisp utilities that comes with recent versions of Emacs.
