@@ -39,7 +39,7 @@
 				    dirs)) 
 			  hosts)))
 
-(defvar git-pull-completion 
+(defun git-pull-completion ()
   (let ((local-dirs (append additional-directories (remove-if-not (lambda (n) (file-directory-p (concat project-directory n))) (directory-files project-directory nil "^[^.#%A-Z]")))))
     (append (list "master" "backup")
 	    (combine machine-addresses local-dirs)
@@ -135,7 +135,7 @@
 (defun git-pull (remote-dir)
   "Pulls from a directory. Typical input is 'user@remote-machine:directory,master'"
   (interactive 
-   (list (let ((input (completing-read-multiple "Pull from: " git-pull-completion)))
+   (list (let ((input (completing-read-multiple "Pull from: " (git-pull-completion))))
 	   (if (= 1 (length input))
 	       (append input '("master"))
 	     input))))
@@ -148,7 +148,7 @@
 (defun git-push (remote-dir)
   "Pushes to a foreign repo"
   (interactive 
-   (list (let ((input (completing-read-multiple "Push to: " git-pull-completion)))
+   (list (let ((input (completing-read-multiple "Push to: " (git-pull-completion))))
 	   (if (= 1 (length input))
 	       (append input '("master"))
 	     input))))
@@ -180,7 +180,7 @@
 (defun git-clone (remote-dir)
   "Clones remote directory in the local directory"
   (interactive 
-   (list (let ((input (completing-read-multiple "Clone from: " git-pull-completion)))
+   (list (let ((input (completing-read-multiple "Clone from: " (git-pull-completion))))
 	     input)))
   (apply 'git-call-process-display-error "clone" remote-dir)
   (git-status (cadr (split-string (car remote-dir) ":"))))
