@@ -76,6 +76,18 @@
 (deftag sig "<span class=\"sig\">" "</span>")
 (deftag edit "<span class=\"edit\">EDIT:\n\n" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
 
+(defun insert-complete-quote (sig)
+  (interactive "sSig: ")
+  (insert-quote)
+  (save-excursion (insert-sig)
+		  (insert sig)))
+
+(defun region-to-complete-quote (sig)
+  (interactive "sSig: ")
+  (region-to-quote)
+  (save-excursion (insert-sig)
+		  (insert sig)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; <pre> and <code> definitions
 (definsert code-block "<pre>" "</pre>")
 (definsert inline-code "<code>" "</code>")
