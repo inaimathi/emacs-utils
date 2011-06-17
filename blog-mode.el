@@ -1,3 +1,4 @@
+(require 'cl)
 (require 'htmlize)
 (require 'convenience)
 
@@ -87,7 +88,7 @@
   (region-to-quote)
   (save-excursion (insert-sig)
 		  (insert sig)))
-
+ 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; <pre> and <code> definitions
 (definsert code-block "<pre>" "</pre>")
 (definsert inline-code "<code>" "</code>")
@@ -158,6 +159,34 @@
 	     (sgml-close-tag))
     (insert "/")))
 
+;;; line converters (these are specific enough that I don't assign hotkeys, just use the M-x command)
+(defun region-to-paragraphs ()
+  (interactive)
+  (region-to-list "p"))
+
+(defun region-to-ul ()
+  (interactive)
+  (region-to-list "li" "ul"))
+
+(defun region-to-ol ()
+  (interactive)
+  (region-to-list "li" "ol"))
+
+(defun region-to-list (line-tag-name &optional wrapper-tag-name)
+  (let* ((start (region-beginning))
+	 (end (region-end))
+	 (line-count (count-lines start end)))
+    (goto-char start)
+    (when wrapper-tag-name (insert "<" wrapper-tag-name ">\n"))
+    (loop for i from 1 to line-count
+    	  do (progn (end-of-line)
+    		    (insert "</" line-tag-name ">")
+    		    (beginning-of-line)
+    		    (insert "<" line-tag-name ">")
+    		    (forward-line)))
+    (when wrapper-tag-name (insert "</" wrapper-tag-name ">\n"))))
+
+;;; for editing docs from sales
 (defun html-escape-region ()
   "Function mostly used for escaping .DOCs from marketing for use in HTML"
   (interactive)
