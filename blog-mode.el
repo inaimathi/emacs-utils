@@ -162,17 +162,18 @@
 ;;; line converters (these are specific enough that I don't assign hotkeys, just use the M-x command)
 (defun region-to-paragraphs ()
   (interactive)
-  (region-to-list "p"))
+  (region-to-tag "p"))
 
 (defun region-to-ul ()
   (interactive)
-  (region-to-list "li" "ul"))
+  (region-to-tag "li" "ul"))
 
 (defun region-to-ol ()
   (interactive)
-  (region-to-list "li" "ol"))
+  (region-to-tag "li" "ol"))
 
-(defun region-to-list (line-tag-name &optional wrapper-tag-name)
+(defun region-to-tag (line-tag-name &optional wrapper-tag-name)
+  (interactive "sTag: ")
   (let* ((start (region-beginning))
 	 (end (region-end))
 	 (line-count (count-lines start end)))
