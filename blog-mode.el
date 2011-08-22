@@ -15,6 +15,7 @@
   "C-c s" insert-sig
   "C-c f" insert-footnote
   "C-c e" insert-edit
+  "C-c n" insert-note
   
   "C-c C-l" region-to-link
   "C-c C-p" region-to-code-block
@@ -25,7 +26,8 @@
   "C-c C-s" region-to-sig
   "C-c C-f" region-to-footnote
   "C-c C-e" region-to-edit
-
+  "C-c C-n" region-to-note
+  
   "C-c g" html-escape-region
   "/" smart-backslash)
 
@@ -43,6 +45,10 @@
 (defcustom blog-footnote-header "<hr />\n<h5>Footnotes</h5>"
   "The string used to delimit footnotes from the rest of the blog post. 
    If you change this, make it something fairly unique or you'll run into obvious trouble."
+  :group 'blog-mode)
+
+(defcustom blog-note-types '("beginner" "platform" "editor")
+  "Completions used for the region-to-div and insert-div shortcut functions"
   :group 'blog-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; simple definitions
@@ -76,6 +82,12 @@
 (deftag quote "<blockquote>" "</blockquote>")
 (deftag sig "<span class=\"sig\">" "</span>")
 (deftag edit "<span class=\"edit\">EDIT:\n\n" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
+(deftag note 
+  (let ((n-type (completing-read "Note Type: " blog-div-classes)))
+    (concat "<div class=\"note " n-type "\">\n"
+	    "<h3>" (capitalize n-type) " Note</h3>\n"
+	    "<span class=\"note-body\">\n"))
+  "\n</span>\n</div>")
 
 (defun insert-complete-quote (sig)
   (interactive "sSig: ")
