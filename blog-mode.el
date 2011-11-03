@@ -29,7 +29,8 @@
   "C-c C-n" region-to-note
   
   "C-c g" html-escape-region
-  "/" smart-backslash)
+;;  "/" smart-backslash
+  ">" smart-brace)
 
 
 (define-minor-mode blog-mode
@@ -83,11 +84,17 @@
 (deftag sig "<span class=\"sig\">" "</span>")
 (deftag edit "<span class=\"edit\">EDIT:\n\n" (concat "\n" (format-time-string "%a, %d %b, %Y" (current-time)) "</span>"))
 (deftag note 
-  (let ((n-type (completing-read "Note Type: " blog-div-classes)))
+  (let ((n-type (completing-read "Note Type: " blog-note-types)))
     (concat "<div class=\"note " n-type "\">\n"
 	    "<h3>" (capitalize n-type) " Note</h3>\n"
 	    "<span class=\"note-body\">\n"))
   "\n</span>\n</div>")
+
+(defun html-paragraph ()
+  "Custom definition for html-modes' html-paragraph (the default doesn't auto-close the tag)"
+  (interactive)
+  (insert "<p>")
+  (save-excursion (insert "</p>")))
 
 (defun insert-complete-quote (sig)
   (interactive "sSig: ")
@@ -134,7 +141,9 @@
 	       (num (number-to-string (+ 1 (count-footnotes)))))
 	   (insert "<a href=\"#foot-" footnote-name "\" name=\"note-" footnote-name "\">[" num "]</a>")
 	   (goto-char (point-max))
-	   (insert "\n\n" num " - <a href=\"#note-" footnote-name "\" name=\"foot-" footnote-name "\">[back]</a> - "))))
+	   (insert "\n\n")
+	   (html-paragraph)
+	   (insert num " - <a href=\"#note-" footnote-name "\" name=\"foot-" footnote-name "\">[back]</a> - "))))
 
 (defun region-to-footnote ()
   "Inserts a footnote at point and return link at the bottom. Moves the current region to the end of the file. 
@@ -163,6 +172,8 @@
 	count))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; utility and general primitives
+(defregion strikethru "<span style=\"text-decoration: line-through;\">" "</span>")
+
 (defun smart-backslash ()
   "Backslash closes previous tag when used in the combination </. Self-inserts otherwise."
   (interactive)
@@ -170,6 +181,12 @@
       (progn (backward-delete-char 1)
 	     (sgml-close-tag))
     (insert "/")))
+
+(defun smart-brace ()
+  "Closing pointy brace closes SGML tag."
+  (interactive)
+  (insert ">")
+  (save-excursion (sgml-close-tag)))
 
 ;;; line converters (these are specific enough that I don't assign hotkeys, just use the M-x command)
 (defun region-to-paragraphs ()
