@@ -10,7 +10,8 @@ Put the folder somewhere in your load path, `byte-compile-file` them, and requir
  - `(require 'tagariffic)`
  - `(require 'blog-mode)`
  - `(require 'git-custom)`
- - `(require 'convenience)` (this is included with blog-mode)
+ - `(require 'teensy-mode)`
+ - `(require 'convenience)` (this is included with blog-mode and teensy-mode)
 
 ### Dependencies
 
@@ -21,6 +22,8 @@ Put the folder somewhere in your load path, `byte-compile-file` them, and requir
 `blog-mode` works without dependencies, but can't format code for you unless you have [htmlize](http://www.emacswiki.org/emacs/Htmlize) installed and included. It also uses `x-get-clipboard` to format link addresses (so you'll need to tweak it if you're a windows or OS X user). It also assumes you have the `convenience` package from this repo in your load path.
 
 `convenience` assumes you have the `cl` package. It isn't actually a mode, but rather convenience functions for writing modes. It includes an elisp-macroexpander, word/character counters and shorthand macros for keymap/global mode definitions
+
+`teensy-mode` assumes you have the `convenience` package. The default options also assume you have `gnu-make`, `gcc` and `teensy_loader_cli` installed (though you can change what all of them use through `M-x customize-group teensy-mode`)
 
 # tagariffic
 
@@ -44,3 +47,9 @@ A few customizations from the standard `git-mode` for my ease of use. It may be 
  - branching/merging
  - log/diff/diff completions
  - directory manipulation (specifically, a recursive `git-add`, so that directories are shakily supported)
+
+# teensy-mode
+
+#### Extra keystrokes for Teensy development in C
+
+It's just basic scripts that enable compiling, project-compiling and loading onto a Teensy board through Emacs. 
