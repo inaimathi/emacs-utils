@@ -40,7 +40,7 @@
   (use-local-map blog-mode-map))
 
 (defgroup blog-mode nil
-  "Additions to Emacs git mode"
+  "Custom extensions to HTML mode geared towards blogging"
   :group 'editing)
 
 (defcustom blog-footnote-header "<hr />\n<h5>Footnotes</h5>"
