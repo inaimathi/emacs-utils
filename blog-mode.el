@@ -27,9 +27,10 @@
   "C-c C-f" region-to-footnote
   "C-c C-e" region-to-edit
   "C-c C-n" region-to-note
-  
+
+  "C-c RET" blog-html-paragraph
   "C-c g" html-escape-region
-;;  "/" smart-backslash
+  "/" smart-backslash
   ">" smart-brace)
 
 
@@ -90,7 +91,7 @@
 	    "<span class=\"note-body\">\n"))
   "\n</span>\n</div>")
 
-(defun html-paragraph ()
+(defun blog-html-paragraph ()
   "Custom definition for html-modes' html-paragraph (the default doesn't auto-close the tag)"
   (interactive)
   (insert "<p>")
@@ -140,9 +141,9 @@
 	 (let ((footnote-name (format-time-string "%a-%b-%d-%H%M%S%Z-%Y" (current-time)))
 	       (num (number-to-string (+ 1 (count-footnotes)))))
 	   (insert "<a href=\"#foot-" footnote-name "\" name=\"note-" footnote-name "\">[" num "]</a>")
-	   (goto-char (point-max))
-	   (insert "\n\n")
-	   (html-paragraph)
+	   (goto-char (+ 1 (buffer-size)))
+	   (insert "\n")
+	   (blog-html-paragraph)
 	   (insert num " - <a href=\"#note-" footnote-name "\" name=\"foot-" footnote-name "\">[back]</a> - "))))
 
 (defun region-to-footnote ()
@@ -155,7 +156,7 @@
 
 (defun footnotes-header ()
   "Inserts footnote header if not already present"
-  (unless (save-excursion (search-forward blog-footnote-header nil t))
+  (unless (save-excursion (goto-char 1) (search-forward blog-footnote-header nil t))
     (save-excursion 
       (goto-char (point-max))
       (insert "\n\n" blog-footnote-header))))
