@@ -165,7 +165,7 @@
   "Returns the number of footnotes in the current file. Used for human-readable note labels"
   (interactive)
   (save-excursion
-    (if (not (search-forward blog-footnote-header nil t))
+    (if (not (progn (goto-char 1) (search-forward blog-footnote-header nil t)))
 	0
       (let ((count -1))
 	(while (progn (setq count (1+ count))
