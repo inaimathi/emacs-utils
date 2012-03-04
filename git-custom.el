@@ -3,16 +3,18 @@
 ;;Addendum to the built-in GIT library for Emacs
 (add-hook 'git-status-mode-hook
 	  (lambda () 
-	    (define-key git-status-mode-map "\C-p" 'git-pull)
-	    (define-key git-status-mode-map "\S-p" 'git-push)
-	    (define-key git-status-mode-map "\M-f" 'git-svn-fetch)
-	    (define-key git-status-mode-map "\M-d" 'git-svn-dcommit)
-	    (define-key git-status-mode-map "\C-d" 'git-diff-with-revisions)
-	    (define-key git-status-mode-map "\C-l" 'git-log)
-	    (define-key git-status-mode-map "\S-l" 'git-log-full)
-	    (define-key git-status-mode-map "\C-b" 'git-branch)
-	    (define-key git-status-mode-map "\S-b" 'git-branch-d)
-	    (define-key git-status-mode-map "e" 'git-merge)))
+	    (define-key git-status-mode-map (kbd "C-p") 'git-pull)
+	    (define-key git-status-mode-map (kbd "P") 'git-push)
+	    (define-key git-status-mode-map (kbd "M-f") 'git-svn-fetch)
+	    (define-key git-status-mode-map (kbd "M-d") 'git-svn-dcommit)
+	    (define-key git-status-mode-map (kbd "C-d") 'git-diff-with-revisions)
+	    (define-key git-status-mode-map (kbd "C-l") 'git-log)
+	    (define-key git-status-mode-map (kbd "L") 'git-log-full)
+	    (define-key git-status-mode-map (kbd "t T") 'git-tag)
+	    (define-key git-status-mode-map (kbd "t t") 'git-tag-list)
+	    (define-key git-status-mode-map (kbd "C-b") 'git-branch)
+	    (define-key git-status-mode-map (kbd "B") 'git-branch-d)
+	    (define-key git-status-mode-map (kbd "e") 'git-merge)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; group and customizations
 (defgroup git-custom nil
@@ -69,6 +71,20 @@
   (unless git-status (error "Not in git-status buffer."))
   (when (git-call-process-display-error "merge" branch)
     (when (y-or-n-p (concat "Delete " branch "?: ")) (git-call-process-display-error "branch" "-d" branch))))
+
+;;;;;;;;;; git tag
+(defun git-tag (tag &optional revision)
+  (interactive (list (read-string "Tag: ") 
+		     (completing-read "Revision number: " (git-log-completions))))
+  (unless git-status (error "Not in git-status buffer"))
+  (let ((rev (if (or (null revision) (string= "" revision)) "HEAD" revision)))
+    (git-call-process-display-error "tag" tag rev)))
+
+(defun git-tag-list ()
+  (interactive)
+  (unless git-status (error "Not in git-status buffer"))
+  (apply #'git-run-command-buffer "*git-tags*" '("tag"))
+  (display-buffer "*git-tags*"))
 
 ;;;;;;;;;; git-svn interactions
 (defun git-svn-fetch ()
