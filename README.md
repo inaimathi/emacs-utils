@@ -47,7 +47,9 @@ A few customizations from the standard `git-mode` for my ease of use. It may be 
  - branching/merging
  - log/diff/diff completions
  - directory manipulation (specifically, a recursive `git-add`, so that directories are shakily supported)
-
+ - light tagging (tagging a branch and getting tags, that's all)
+ - stash interaction
+ 
 # teensy-mode
 
 #### Extra keystrokes for Teensy development in C

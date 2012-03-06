@@ -3,6 +3,13 @@
 ;;Addendum to the built-in GIT library for Emacs
 (add-hook 'git-status-mode-hook
 	  (lambda () 
+	    (let ((stash-map (make-sparse-keymap)))
+	      (define-key git-status-mode-map (kbd "s") stash-map)
+	      (define-key stash-map (kbd "s") 'git-stash)
+	      (define-key stash-map (kbd "l") 'git-stash-list)
+	      (define-key stash-map (kbd "c") 'git-stash-clear)
+	      (define-key stash-map (kbd "a") 'git-stash-apply)
+	      (define-key stash-map (kbd "d") 'git-stash-drop))
 	    (define-key git-status-mode-map (kbd "C-p") 'git-pull)
 	    (define-key git-status-mode-map (kbd "P") 'git-push)
 	    (define-key git-status-mode-map (kbd "M-f") 'git-svn-fetch)
@@ -72,6 +79,41 @@
   (when (git-call-process-display-error "merge" branch)
     (when (y-or-n-p (concat "Delete " branch "?: ")) (git-call-process-display-error "branch" "-d" branch))))
 
+;;;;;;;;;; git stash
+(defun git-stash (&optional label)
+  (interactive "sLabel: ")
+  (if (string= "" label)
+      (git-call-process-display-error "stash")
+    (git-call-process-display-error "stash" "save" label)) 
+  (git-refresh-status))
+
+(defun git-stash-list ()
+  (interactive)
+  (git-run-command-buffer "*git-stash*" "stash" "list")
+  (display-buffer "*git-stash*"))
+
+(defun git-stash-clear ()
+  (interactive)
+  (git-call-process-display-error "stash" "clear"))
+
+(defun git-stash-completions ()
+  (git-stash-list)
+  (with-current-buffer "*git-stash*"
+    (butlast (mapcar (lambda (x) (when (>= (string-width x) 9) (substring x 0 9)))
+		     (split-string (buffer-string) "\n")))))
+
+(defun git-stash-drop (stash-id)
+  (interactive (list (completing-read "Stash ID: " (git-stash-completions))))
+  (git-call-process-display-error "stash" "drop" stash-id))
+
+(defun git-stash-apply (&optional stash-id)
+  (interactive (list (completing-read "Stash ID: " (git-stash-completions))))
+  (if (string= "" stash-id)
+      (git-call-process-display-error "stash" "apply")
+    (git-call-process-display-error "stash" "apply" stash-id))
+  (git-stash-drop stash-id)
+  (git-refresh-status))
+
 ;;;;;;;;;; git tag
 (defun git-tag (tag &optional revision)
   (interactive (list (read-string "Tag: ") 
@@ -83,7 +125,7 @@
 (defun git-tag-list ()
   (interactive)
   (unless git-status (error "Not in git-status buffer"))
-  (apply #'git-run-command-buffer "*git-tags*" '("tag"))
+  (git-run-command-buffer "*git-tags*" "tag")
   (display-buffer "*git-tags*"))
 
 ;;;;;;;;;; git-svn interactions
@@ -103,7 +145,7 @@
 (defun git-log-full ()
   "Display full log for the current repo (the main point is the timestamps)"
   (interactive)
-  (let ((buffer (apply #'git-run-command-buffer "*git-log*" '("log"))))
+  (let ((buffer (git-run-command-buffer "*git-log*" "log")))
     (with-current-buffer buffer
       (goto-char (point-min))
       (setq buffer-read-only t))
