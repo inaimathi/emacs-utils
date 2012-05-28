@@ -10,12 +10,15 @@ Put the folder somewhere in your load path, `byte-compile-file` them, and requir
  - `(require 'tagariffic)`
  - `(require 'blog-mode)`
  - `(require 'git-custom)`
+ - `(require 'erl-custom)`
  - `(require 'teensy-mode)`
  - `(require 'convenience)` (this is included with blog-mode and teensy-mode)
 
 ### Dependencies
 
 `git-custom` assumes you have Emacs' git mode included which comes with the `git-core` debian package. In order to include it, you need to add `"/usr/share/doc/git-core/contrib/emacs"` to your load-path and add `(require 'git)` to your `.emacs`. It also assumes you have the `cl` package (but `require`s it itself); this is a port of certain Common Lisp utilities that comes with recent versions of Emacs.
+
+`erl-custom` assumes you have Emacs' git mode, and uses `shell-command` to call out to `git`.
 
 `tagariffic` works without dependencies, but can't tag Haskell projects unless you have [hasktags](http://hackage.haskell.org/package/hasktags) installed.
 
@@ -36,6 +39,12 @@ Adds a minor mode with two keybindings, `C-.` and `C->`. They allow you to manag
 #### Editing shortcuts for blogging. Highlights are the link, code and footnote generators.
 
 Minor mode that adds a number of keyboard shortcuts for inserting/regioning various tags. It also manages linked footnotes automatically.
+
+# erl-custom
+
+#### Utility functions to generate basic Erlang project skeletons
+
+I got sick of writing the same `.app`, `_app.erl`, `_supervisor.erl` and `Makefile` skeletons every time I start a new Erlang project. So now I don't have to. Note that this is a "mode" for purposes of `require`, but doesn't actually create a new mode and doesn't assign keybindings to any of the functions it defines. The only one I really use is `erl-custom-template-project`, and that gets run so seldom that I didn't want to clutter my keyboard shortcuts out of the box. YMMV, of course.
 
 # git-custom
 

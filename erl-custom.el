@@ -28,10 +28,10 @@ Prompts if a file named [file-name] already exists in the specified directory."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; generation functions
 (defun erl-custom-template-readme (project-name description module-names)
   "Takes a [project-name] and [module-names]. 
-Creates a Readme.md with appropriate headings."
+Creates a README.md with appropriate headings."
   (interactive (erl-custom-get-interactive))
   (with-local-file
-   "Readme.md"
+   "README.md"
    (insert "# " project-name 
 	   "\n*" description "*"
 	   "\n\n\n### "
