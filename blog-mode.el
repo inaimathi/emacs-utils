@@ -53,6 +53,46 @@
   "Completions used for the region-to-div and insert-div shortcut functions"
   :group 'blog-mode)
 
+(defcustom blog-default-blogger-title nil
+  "the default blog to post to using interactive invocation of `blog-post-to-blogger`"
+  :group 'blog-mode)
+
+(defcustom blog-default-blogger-user nil
+  "The default blog to post to using interactive invocation of `blog-post-to-blogger`"
+  :group 'blog-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; googlecl-related
+(defun blog-post-to-blogger (file-name post-title blogger-user blogger-blog-title)
+  "Posts the current article to Blogger.
+  Uses blog-default-blogger-title and blog-default-blogger-user to specify the user account and blog.
+  This assumes that you've given googlecl permission to use 
+your google account manually (that is, through terminal)"
+  (interactive (list (buffer-file-name) (read-string "Post Title: ")
+		     blog-default-blogger-user blog-default-blogger-title))
+  (cond ((not file-name) 
+	 (message "You need to save your post before I can post it."))
+	((not (and blogger-user blogger-blog-title)) 
+	 (message "Please specify the blogger-user and blogger-title (or customize the appropriate variables in blog-mode)"))
+	((and file-name post-title blogger-user blogger-blog-title)
+	 (shell-command
+	  (format "google -u '%s' blogger --blog='%s' post --title '%s' %s" 
+		  blogger-user blogger-blog-title post-title 
+		  (car (last (split-string file-name "/"))))))
+	(t (message "Error posting for some weird reason."))))
+
+(defun blog-delete-blog-post (post-title blogger-user blogger-blog-title)
+  "Deletes the specified blog post from the specified blog."
+  (interactive (list (read-string "Post Title: ") ;; doesn't use the list as completions because `google blogger list` is slower than a fucking glacier 
+		     blog-default-blogger-user blog-default-blogger-title))
+  (shell-command (format "google -u '%s' blogger --blog='%s' delete --title '%s'"
+			 blogger-user blogger-blog-title post-title)))
+
+(defun blog-list-blog-posts (blogger-blog-title blogger-user)
+  "Returns a list of posts published under the given blog.
+Warning: SLOW AS FUCK"
+  (interactive (list blog-default-blogger-title blog-default-blogger-user))
+  (shell-command (format "google -u '%s' blogger --blog='%s' list" blogger-user blogger-blog-title)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; simple definitions
 (defmacro definsert (tag-name start-tag end-tag)
   "Defines function to insert tag surrounding point."
@@ -63,14 +103,10 @@
 
 (defmacro defregion (tag-name start-tag end-tag)
   "Defines region wrapper function."
-  `(defun ,(make-symbol (concat "region-to-" (symbol-name tag-name))) ()
-     (interactive)
-     (let ((start (region-beginning))
-	   (end (region-end)))
-       (goto-char end)
-       (insert ,end-tag)
-       (goto-char start)
-       (insert ,start-tag))))
+  `(defun ,(make-symbol (concat "region-to-" (symbol-name tag-name))) (start end)
+     (interactive "r")
+     (goto-char end) (insert ,end-tag)
+     (goto-char start) (insert ,start-tag)))
 
 (defmacro deftag (tag-name start-tag end-tag)
   "Shortcut for tags that have standard defregion and definsert definitions"
