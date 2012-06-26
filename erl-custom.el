@@ -37,6 +37,54 @@ Creates a README.md with appropriate headings."
 	   "\n\n\n### "
 	   (mapconcat 'identity module-names "\n\n### "))))
 
+(defun erl-custom-template-erlport (module-name)
+  "Takes a module name and creates corresponding .erl and .py files for a bridge between the two languages."
+  (interactive "MModule name: ")
+  (with-local-file
+   (concat module-name ".py")
+   (insert "from erlport import Port, Protocol, String
+        
+class " (capitalize module-name) "Protocol(Protocol):
+    def handle_hello(self, name):
+        return \"Hello, %s\" % String(name)
+
+if __name__ == \"__main__\":
+    " (capitalize module-name) "Protocol().run(Port(packet=4, use_stdio=True))"))
+  (with-local-file
+   (concat module-name ".erl")
+   (insert "-module(" module-name ").
+-behaviour(gen_server).
+
+-export([start/0, stop/0]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
+
+-export([hello/1]).
+
+hello(Name) -> gen_server:call(?MODULE, {hello, Name}).
+
+handle_call({'EXIT', _Port, Reason}, _From, _State) ->
+    exit({port_terminated, Reason});
+handle_call(Message, _From, Port) ->
+    port_command(Port, term_to_binary(Message)),
+    receive
+	{State, {data, Data}} -> 
+	    {reply, binary_to_term(Data), State}
+    after 6000 -> 
+	    exit(timeout)
+    end.
+
+%%%%%%%%%%%%%%%%%%%% generic actions
+start() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+stop() -> gen_server:call(?MODULE, stop).
+
+%%%%%%%%%%%%%%%%%%%% gen_server handlers
+init([]) -> {ok, open_port({spawn, \"python -u " module-name ".py\"}, [{packet, 4}, binary, use_stdio])}.
+handle_cast(_Msg, State) -> {noreply, State}.
+handle_info(_Info, State) -> {noreply, State}.
+terminate(_Reason, State) -> State ! {self(), close}, ok.
+code_change(_OldVsn, State, _Extra) -> {ok, State}.")))
+
 (defun erl-custom-template-notes.org ()
   "Creates a notes.org file in the current directory for my personal annotation."
   (interactive)
@@ -59,22 +107,39 @@ Needs [project-name] because it creates a `run` task that starts a named node ru
   (interactive (list (erl-custom-get-project-name)))
   (with-local-file 
    "Makefile"
-   (insert "all: *.erl 
-	erlc -W *erl
+   (insert "exclude = .git .gitignore *~ docs *org *csv *.log *.dump Mnesia* src/*
 
-run: 
-	erl -name " project-name "@127.0.1.1 -eval 'application:load("project-name").' -eval 'application:start("project-name").'
+all:
+	erlc -Wf -o ebin/ src/*erl
+	cp src/*app ebin/
+
+install:
+	apt-get install screen erlang libmagickwand-dev python-setuptools
+	easy_install erlport
+
+mnesia-create:
+	erl -eval 'mnesia:create_schema([node()]), init:stop().'
+
+start: 
+	screen -S " project-name " erl -name " project-name "@127.0.1.1 -eval 'application:load(" project-name "), application:start(" project-name ").'
+
+attach:
+	screen -r " project-name "
 
 clean:
-	rm *beam")))
+	rm ebin/*")))
 
 (defun erl-custom-template-gitignore ()
-  "Creates a basic .gitignore file that ignores `*~` and `*.beam`."
+  "Creates a basic .gitignore file"
   (interactive)
   (with-local-file
    ".gitignore"
    (insert "*~
-*.beam")))
+*.beam
+Mnesia*
+*dump
+*log
+*.pyc")))
 
 (defun erl-custom-template-app (project-name description module-names)
   "Takes [project-name], [description] and [module-names] (a list of initial modules for the project), and creates the appropriate basic .app file."
@@ -157,28 +222,71 @@ stop() -> gen_server:call(?MODULE, stop).
 init([]) -> {ok, []}.
 handle_cast(_Msg, State) -> {noreply, State}.
 handle_info(_Info, State) -> {noreply, State}.
-terminate(_Reason, State) -> State ! {self(), close}, ok.
+terminate(_Reason, _State) -> ok.
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
 ")))
+
+(defun erl-custom-template-model_server (module-name)
+  "Given a [module-name], generates a MINIMAL gen_server module, and includes some model-related files."
+  (interactive "MModule Name: ")
+  (let ((singular (substring module-name 0 (- (length module-name) 1))))
+    (with-local-file
+     (concat module-name ".erl")
+     (insert "-module(" module-name ").
+-behaviour(gen_server).
+-include_lib(\"stdlib/include/qlc.hrl\").
+-include_lib(\"model.hrl\").
+
+-export([start/0, stop/0]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
+
+add(" (capitalize singular) "Name) -> gen_server:call(?MODULE, {insert, #" singular "{id=now(), name=" (capitalize singular) "Name}}).
+list() -> gen_server:call(?MODULE, list).
+find(" (capitalize singular) "Id) ->
+    [Rec] = db:do(qlc:q([X || X <- mnesia:table(" singular "), X#" singular ".id =:= " (capitalize singular) "Id])),
+    Rec.
+
+handle_call({insert, Record}, _From, State) ->
+    {reply, db:atomic_insert(Record), State};
+handle_call(list, _From, State) -> 
+    {reply, db:do(qlc:q([X || X <- mnesia:table(" singular ")])), State}.
+
+%%%%%%%%%%%%%%%%%%%% generic actions
+start() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+stop() -> gen_server:call(?MODULE, stop).
+
+%%%%%%%%%%%%%%%%%%%% gen_server handlers
+init([]) -> {ok, []}.
+handle_cast(_Msg, State) -> {noreply, State}.
+handle_info(_Info, State) -> {noreply, State}.
+terminate(_Reason, _State) -> ok.
+code_change(_OldVsn, State, _Extra) -> {ok, State}."))))
 
 (defun erl-custom-template-project (project-name description module-names)
   "Takes a [project-name], [description] and list of initial [module-names].
 Creates a project folder named [project-name] in the current directory,
 initializes it as a git repository, and generates .gitignore, Makefile, and basic Erlang project files."
   (interactive (erl-custom-get-interactive))
-  (let ((dirname (concat default-directory (replace-regexp-in-string "_" "-" project-name))))
+  (let ((cur-dir default-directory)
+	(dirname (concat default-directory (replace-regexp-in-string "_" "-" project-name))))
     (progn (mkdir dirname)
 	   (shell-command (concat "git init " dirname))
-	   (git-status dirname)
-	   
+
+	   (cd dirname)
+	   (mkdir "src")
+	   (mkdir "deps")
+	   (mkdir "ebin")
 	   (erl-custom-template-makefile project-name)
 	   (erl-custom-template-gitignore)
 	   (erl-custom-template-notes.org)
 	   (erl-custom-template-readme project-name description module-names)
 
+	   (cd "src")
 	   (erl-custom-template-app project-name description module-names)
 	   (erl-custom-template-app.erl project-name)
 	   (erl-custom-template-supervisor project-name module-names)
-	   (mapc #'erl-custom-template-gen_server module-names))))
+	   (mapc #'erl-custom-template-gen_server module-names)
+	   (cd cur-dir))))
 
 (provide 'erl-custom)
