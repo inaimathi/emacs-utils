@@ -2,37 +2,56 @@
 (require 'htmlize)
 (require 'convenience)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; special character related
+(defcustom blog-special-chars
+  (list :copyright "©" :trademark "™" :registered "®" :interrobang "‽" :irony "؟")
+  "Commonly used (for blogging purposes) spechial characters."
+  :group 'blog-mode)
+
+(defvar blog-mode-special-char-map nil
+  "Character insertion submap for Blog Mode")
+
+(defun insert-special (char)
+  `(lambda ()
+     (interactive)
+     (insert ,(getf blog-special-chars char))))
+
+(let ((map (make-sparse-keymap)))
+  (define-key map (kbd "c") (insert-special :copyright))
+  (define-key map (kbd "t") (insert-special :trademark))
+  (setf blog-mode-special-char-map map))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymap and other customs
+
 (defvar blog-mode-map nil
   "Keymap for blog minor mode")
-
-(def-sparse-map blog-mode-map
-  "C-c l" insert-link
-  "C-c p" insert-code-block
-  "C-c c" insert-inline-code
-  "C-c b" insert-bold
-  "C-c i" insert-italic
-  "C-c q" insert-quote
-  "C-c s" insert-sig
-  "C-c f" insert-footnote
-  "C-c e" insert-edit
-  "C-c n" insert-note
+(let ((map (make-sparse-keymap))) 
+  (define-key map (kbd "C-c s") blog-mode-special-char-map)
+  (define-key map (kbd "C-c l") 'insert-link)
+  (define-key map (kbd "C-c p") 'insert-code-block)
+  (define-key map (kbd "C-c c") 'insert-inline-code)
+  (define-key map (kbd "C-c b") 'insert-bold)
+  (define-key map (kbd "C-c i") 'insert-italic)
+  (define-key map (kbd "C-c q") 'insert-complete-quote)
+  (define-key map (kbd "C-c f") 'insert-footnote)
+  (define-key map (kbd "C-c e") 'insert-edit)
+  (define-key map (kbd "C-c n") 'insert-note)  
   
-  "C-c C-l" region-to-link
-  "C-c C-p" region-to-code-block
-  "C-c C-c" region-to-inline-code
-  "C-c C-b" region-to-bold
-  "C-c C-i" region-to-italic
-  "C-c C-q" region-to-quote
-  "C-c C-s" region-to-sig
-  "C-c C-f" region-to-footnote
-  "C-c C-e" region-to-edit
-  "C-c C-n" region-to-note
-
-  "C-c RET" blog-html-paragraph
-  "C-c g" html-escape-region
-  "/" smart-backslash
-  ">" smart-brace)
-
+  (define-key map (kbd "C-c C-l") 'region-to-link)
+  (define-key map (kbd "C-c C-p") 'region-to-code-block)
+  (define-key map (kbd "C-c C-c") 'region-to-inline-code)
+  (define-key map (kbd "C-c C-b") 'region-to-bold)
+  (define-key map (kbd "C-c C-i") 'region-to-italic)
+  (define-key map (kbd "C-c C-q") 'region-to-complete-quote)
+  (define-key map (kbd "C-c C-f") 'region-to-footnote)
+  (define-key map (kbd "C-c C-e") 'region-to-edit)
+  (define-key map (kbd "C-c C-n") 'region-to-note)
+  
+  (define-key map (kbd "C-c RET") 'blog-html-paragraph)
+  (define-key map (kbd "C-c g") 'html-escape-region)
+  (define-key map (kbd "/") 'smart-backslash)
+  (define-key map (kbd ">") 'smart-brace)
+  (setq blog-mode-map map))
 
 (define-minor-mode blog-mode
   "This is a collection of useful keyboard macros for editing Langnostic"

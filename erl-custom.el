@@ -64,20 +64,20 @@ Needs [project-name] because it creates a `run` task that starts a named node ru
   (interactive (list (erl-custom-get-project-name)))
   (with-local-file 
    "Makefile"
-   (insert "exclude = .git .gitignore *~ docs *org *csv *.log *.dump Mnesia* src/*
-dependencies = ~/projects-work/erlang/common
+   (insert "exclude = .git .gitignore *~ *.dump Mnesia* src rel notes.org README.md
+deps = util common
+erl_lib = $(ERL_PROJECTS)
 
-### Erlang eval shortcuts
-erl_start = -eval 'application:start(sasl), application:load(" project-name "), application:start(" project-name ").'
+### Erlang shortcuts
+ERL = erl -pa ebin -pa deps -pa priv
 
-erl_gen_rel = -eval '{_, _, Version} = lists:keyfind(" project-name ", 1, application:loaded_applications()), Rel = {release, {\"" project-name "_rel\", Version}, {erts, erlang:system_info(version)}, lists:map(fun ({App, _Desc, Ver}) -> {App, Ver} end, application:loaded_applications())}, file:write_file(\"rel/" project-name "-\" ++ Version ++ \".rel\", io_lib:format(\"~p.\", [Rel])).'
+erl_start = -eval 'lists:map(fun (App) -> application:load(App), application:start(App) end, [sasl, util, common, " project-name "]).'
 
-erl_build = -eval '{_, _, V} = lists:keyfind(" project-name ", 1, application:loaded_applications()), N = \"rel/" project-name "-\" ++ V, systools:make_script(N, [local]), systools:make_tar(N), os:cmd(lists:append([\"mkdir \", N, \"; tar -xzf \", N, \".tar.gz -C \", N])).'
-
-erl_stop = -eval 'init:stop().'
+erl_stop = -s init stop
 
 ### Rules
-all:
+all: 
+	$(foreach var, $(deps), cp $(erl_lib)$(var)/ebin/* deps/; rsync -r $(erl_lib)$(var)/priv/ priv;)
 	erlc -Wf -o ebin/ src/*erl
 	cp src/*app ebin/
 
@@ -86,22 +86,22 @@ install:
 	easy_install erlport
 
 gen-rel:
-	erl -pa ebin $(erl_start) $(erl_gen_rel) $(erl_stop)
+	$(ERL) $(erl_start) $(erl_gen_rel) $(erl_stop)
 
 gen-build: gen-rel
-	erl -pa ebin $(erl_start) $(erl_build) $(erl_stop)
+	$(ERL) $(erl_start) $(erl_build) $(erl_stop)
 
 mnesia-create:
-	erl -eval 'mnesia:create_schema([node()]), init:stop().'
+	erl -name " project-name "@127.0.1.1 -eval 'mnesia:create_schema([node()]).' $(erl_stop)
 
 start: 
-	screen -S " project-name " erl -pa ebin -name " project-name "@127.0.1.1 $(erl_start)
+	screen -S " project-name " $(ERL) -name " project-name "@127.0.1.1 $(erl_start)
 
 attach:
 	screen -r " project-name "
 
 clean:
-	rm ebin/*")))
+	rm ebin/* deps/* priv/* ")))
 
 (defun erl-custom-template-gitignore ()
   "Creates a basic .gitignore file"
@@ -168,16 +168,10 @@ stop(_State) -> ok.")))
    (insert "-module(" supervisor-name "_sup).
 -behavior(supervisor).
 
--export([start/0, start_for_testing/0, start_link/1, init/1]).
-
--define(CHILD(I, Type), {I, {I, start, []}, permanent, 10000, Type, [I]}).
+-export([start/0, start_link/1, init/1]).
 
 start() ->
     spawn(fun() -> supervisor:start_link({local, ?MODULE}, ?MODULE, _Arg = []) end).
-
-start_for_testing() ->
-    {ok, Pid} = supervisor:start_link({local, ?MODULE}, ?MODULE, _Arg = []),
-    unlink(Pid).
 
 start_link(Args) ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
@@ -187,7 +181,7 @@ init([]) ->
     {ok, {{one_for_one, 3, 10},
 	  [" (mapconcat 
 	      (lambda (c)
-		(concat "?CHILD(" c ", worker)"))
+		(concat "{" c ", {" c ", start, []}, permanent, 5000, worker, [" c "]}"))
 	      module-names
 	      ",\n	   ") "]}}.")))
 
@@ -252,7 +246,7 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.")))
 	 terminate/2, code_change/3]).
 
 handle_call(Message, _From, State) -> 
-    {reply, {you_sent, Message}, State}.
+    {reply, Message, State}.
 
 %%%%%%%%%%%%%%%%%%%% generic actions
 start() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -315,9 +309,8 @@ initializes it as a git repository, and generates .gitignore, Makefile, subfolde
 
 	   (cd dirname)
 	   (mkdir "src")
-	   (mkdir "include")
+	   (mkdir "deps")
 	   (mkdir "priv")
-	   (mkdir "rel")
 	   (mkdir "ebin")
 	   (erl-custom-template-makefile project-name)
 	   (erl-custom-template-gitignore)
