@@ -101,7 +101,7 @@ attach:
 	screen -r " project-name "
 
 clean:
-	rm ebin/* deps/* priv/* ")))
+	rm -r ebin/* deps/* priv/* ")))
 
 (defun erl-custom-template-gitignore ()
   "Creates a basic .gitignore file"
