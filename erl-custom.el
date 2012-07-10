@@ -227,7 +227,12 @@ start() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 stop() -> gen_server:call(?MODULE, stop).
 
 %%%%%%%%%%%%%%%%%%%% gen_server handlers
-init([]) -> {ok, open_port({spawn, \"python -u " module-name ".py\"}, [{packet, 4}, binary, use_stdio])}.
+get_pyc(Name) when is_atom(Name) ->
+    ModDir = filename:dirname(code:which(?MODULE)),
+    filename:join([ModDir, \"..\", \"priv\", atom_to_list(Name) ++ \".pyc\"]).
+init([]) -> 
+    Pyc = get_pyc(?MODULE),
+    {ok, open_port({spawn, \"python -u \" ++ Pyc}, [{packet, 4}, binary, use_stdio])}.
 handle_cast(_Msg, State) -> {noreply, State}.
 handle_info(_Info, State) -> {noreply, State}.
 terminate(_Reason, State) -> State ! {self(), close}, ok.
