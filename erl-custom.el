@@ -302,6 +302,45 @@ handle_info(_Info, State) -> {noreply, State}.
 terminate(_Reason, _State) -> ok.
 code_change(_OldVsn, State, _Extra) -> {ok, State}."))))
 
+(defun erl-custom-template-nitro-element (element-name)
+  (interactive "MElement Name: ")
+  (let ((mod-name (concat "element_" element-name)))
+    (with-local-file 
+     (concat mod-name ".erl")
+     (insert "-module (" mod-name ").
+-compile(export_all).
+-include_lib(\"nitrogen_core/include/wf.hrl\").
+-include(\"records.hrl\").
+
+%% Move the following line to records.hrl:
+-record(" element-name ", {?ELEMENT_BASE(" mod-name "), attr1, attr2}).
+
+reflect() -> record_info(fields, " element-name ").
+
+local(Target, Type, Postback) ->
+    wf:wire(Target, #event{ type=Type, postback=Postback, delegate=?MODULE}).
+
+render_element(_Record = #" element-name "{}) ->
+    \"<b>Hello from " element-name "</b>\".
+
+event(_) -> ok."))))
+
+(defun erl-custom-template-nitro-action (action-name)
+  (interactive "MAction Name: ")
+  (let ((mod-name (concat "action_" action-name)))
+    (with-local-file
+     (concat mod-name ".erl")
+     (insert "-module (" mod-name ").
+-compile (export_all).
+-include_lib (\"nitrogen_core/include/wf.hrl\").
+-include(\"records.hrl\").
+
+%% Move the following line to records.hrl:
+-record(" action-name ", {?ACTION_BASE(" mod-name "), attr1, attr2}).
+
+render_action(_Record = #" action-name "{}) ->
+    \"alert('Hello, from " action-name "!');\"."))))
+
 (defun erl-custom-template-project (project-name description module-names)
   "Takes a [project-name], [description] and list of initial [module-names].
 Creates a project folder named [project-name] in the current directory,

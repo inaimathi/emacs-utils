@@ -53,6 +53,16 @@
   (define-key map (kbd ">") 'smart-brace)
   (setq blog-mode-map map))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Temp function until I put together a proper footnote system
+
+(defun sanitize-footnotes ()
+  (interactive)
+  (query-replace-regexp " (\\(.\\)\\(.*\\))" (upcase "\\1\\2.")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (define-minor-mode blog-mode
   "This is a collection of useful keyboard macros for editing Langnostic"
   nil
@@ -158,11 +168,17 @@ Warning: SLOW AS FUCK"
   (save-excursion (insert-sig)
 		  (insert sig)))
 
-(defun region-to-complete-quote (sig)
+(defun region-to-complete-quote (signature)
   (interactive "sSig: ")
-  (region-to-quote)
-  (save-excursion (insert-sig)
-		  (insert sig)))
+  (let ((start (region-beginning))
+	(end (region-end)))
+    (save-excursion
+      (goto-char end)
+      (save-excursion (insert "</blockquote>"))
+      (insert-sig)
+      (insert "-")
+      (insert signature))
+    (insert "<blockquote>")))
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; <pre> and <code> definitions
 (definsert code-block "<pre>" "</pre>")
