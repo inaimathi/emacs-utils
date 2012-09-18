@@ -13,10 +13,13 @@ Put the folder somewhere in your load path, `byte-compile-file` them, and requir
  - `(require 'erl-custom)`
  - `(require 'teensy-mode)`
  - `(require 'convenience)` (this is included with blog-mode and teensy-mode)
+ - `(require 'ha-custom)`
 
 ### Dependencies
 
 `erl-custom` uses `shell-command` to call out to `git`.
+
+`ha-custom` depends on a local installation of `hoogle` (which you can get using `cabal`) and `hlint` (which is available through `apt-get`). If you want to use other programs for similar aims, the commands used to run these are customizable.
 
 `tagariffic` works without dependencies, but can't tag Haskell projects unless you have [hasktags](http://hackage.haskell.org/package/hasktags) installed.
 
@@ -37,6 +40,12 @@ Adds a minor mode with two keybindings, `C-.` and `C->`. They allow you to manag
 #### Editing shortcuts for blogging. Highlights are the link, code and footnote generators.
 
 Minor mode that adds a number of keyboard shortcuts for inserting/regioning various tags. It also manages linked footnotes automatically.
+
+# ha-custom
+
+#### Utility functions for documentation and linting in haskell-mode
+
+Really only three relevant interactive commands here. `ha-custom-hoogle-search` searches a local hoogle installation for the given search term, `ha-custom-hoogle-doc` shows the doc page for the first result of a given search term, `ha-custom-lint` runs the haskell linter on the current buffer. Once a file has been run through the linter, `ha-custom-do-next-replacement` applies a replacement.
 
 # erl-custom
 
