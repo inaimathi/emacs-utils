@@ -251,6 +251,7 @@ Warning: SLOW AS FUCK"
   (interactive)
   (if (equal (save-excursion (backward-char) (thing-at-point 'char)) "<")
       (progn (backward-delete-char 1)
+	     (delete-char 1)
 	     (sgml-close-tag))
     (insert "/")))
 
@@ -258,7 +259,8 @@ Warning: SLOW AS FUCK"
   "Closing pointy brace closes SGML tag."
   (interactive)
   (insert ">")
-  (save-excursion (sgml-close-tag)))
+  (save-excursion (sgml-close-tag)
+		  (delete-char 1)))
 
 ;;; line converters (these are specific enough that I don't assign hotkeys, just use the M-x command)
 (defun region-to-paragraphs ()
