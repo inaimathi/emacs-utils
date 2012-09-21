@@ -258,9 +258,10 @@ Warning: SLOW AS FUCK"
 (defun smart-brace ()
   "Closing pointy brace closes SGML tag."
   (interactive)
-  (insert ">")
-  (save-excursion (sgml-close-tag)
-		  (delete-char 1)))
+  (cond ((equal ">" (thing-at-point 'char)) (forward-char))
+	((equal ">" (save-excursion (backward-char) (thing-at-point 'char))) nil)
+	(t (insert ">")))
+  (save-excursion (sgml-close-tag)))
 
 ;;; line converters (these are specific enough that I don't assign hotkeys, just use the M-x command)
 (defun region-to-paragraphs ()
