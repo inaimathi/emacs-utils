@@ -270,11 +270,13 @@ Warning: SLOW AS FUCK"
 
 (defun region-to-ul ()
   (interactive)
-  (region-to-tag "li" "ul"))
+  (region-to-tag "li" "ul")
+  (indent-region (region-beginning) (region-end)))
 
 (defun region-to-ol ()
   (interactive)
-  (region-to-tag "li" "ol"))
+  (region-to-tag "li" "ol")
+  (indent-region (region-beginning) (region-end)))
 
 (defun region-to-tag (line-tag-name &optional wrapper-tag-name)
   (interactive "sTag: ")
