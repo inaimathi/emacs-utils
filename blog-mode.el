@@ -4,7 +4,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; special character related
 (defcustom blog-special-chars
-  (list :copyright "©" :trademark "™" :registered "®" :interrobang "‽" :irony "؟")
+  (list :copyright "©" :trademark "™" :registered "®" :interrobang "‽" :irony "؟" :lambda "λ")
   "Commonly used (for blogging purposes) spechial characters."
   :group 'blog-mode)
 
@@ -19,6 +19,8 @@
 (let ((map (make-sparse-keymap)))
   (define-key map (kbd "c") (insert-special :copyright))
   (define-key map (kbd "t") (insert-special :trademark))
+  (define-key map (kbd "r") (insert-special :registered))
+  (define-key map (kbd "l") (insert-special :lambda))
   (setf blog-mode-special-char-map map))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymap and other customs
