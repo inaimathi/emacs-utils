@@ -18,15 +18,26 @@
   "^\\(.*?\\):\\([0-9]+\\):\\([0-9]+\\): .*[\n\C-m]Found:[\n\C-m]\\s +\\(.*\\)[\n\C-m]Why not:[\n\C-m]\\s +\\(.*\\)[\n\C-m]"
   "Regex for HLint messages")
 
-(defun ha-custom-lint-process-setup ()
-  "Setup compilation variables and buffer for `hlint'."
-  (run-hooks 'hs-lint-setup-hook))
+(defun ha-custom-profile-buffer ()
+  (interactive)
+  (find-file-other-window 
+   (ha-custom-profile-haskell-file (buffer-file-name))))
 
-(defun ha-custom-lint-finish-hook (buf msg)
-  "Function, that is executed at the end of HLint execution"
-  (if hs-lint-replace-with-suggestions
-      (hs-lint-replace-suggestions)
-    (next-error 1 t)))
+(defun ha-custom-profile-haskell-file (abs-filename)
+  "Compiles the given file with profiling, 
+runs it with the +RTS -p flags and returns
+the filename of the profiling output."
+  (assert (string= "hs" (file-name-extension abs-filename)))
+  (let* ((f-name (file-name-sans-extension abs-filename))
+	 (tmp (make-temp-file f-name))
+	 (tmp-name (file-name-nondirectory tmp))
+	 (tmp-dir (file-name-directory tmp)))
+    (message "Compiling...")
+    (shell-command (format "ghc -prof -auto-all -o %s '%s'" tmp abs-filename))
+    (message "Profiling...")
+    (shell-command (format "%s./%s +RTS -p" tmp-dir tmp-name))
+    (concat tmp-name ".prof")))
+
 
 (defun ha-custom-hoogle-doc (search-term)
   (interactive "MHoogle Search: ")
