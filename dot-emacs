@@ -2,15 +2,12 @@
 (setq inferior-lisp-program "/usr/bin/sbcl"
       quack-default-program "csi"
       python-command "python3"
-      erlang-root-dir "/usr/lib/erlang"
       browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "conkeror"
       
       load-path (append load-path (list "~/.emacs.d" "~/.emacs.d/yasnippet"
 					"~/emacs-utils"
-					"/usr/share/emacs23/site-lisp/sml-mode/"
-					"/usr/lib/erlang/lib/tools-2.6.7/emacs" 
-					"~/nitrogen/support/nitrogen-mode/")))
+					"/usr/share/emacs23/site-lisp/sml-mode/")))
 
 ;; cosmetics
 (setq scroll-bar-mode-explicit t)
@@ -99,12 +96,6 @@
 	 ;; Fuck you, Markdown mode, you don't get to re-bind tab
 	 (setf (cdr (assoc 'tab markdown-mode-map)) 'yas/expand)))
 (by-ext ("md" "text") markdown-mode)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;; Erlang
-(hooks erlang (lambda () (imenu-add-to-menubar "Functions")))
-(require 'erlang-start)
-(require 'erl-custom)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;; Python
