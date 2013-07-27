@@ -10,14 +10,32 @@
 ;;; key and mode declaration shortcuts
 (defmacro def-sparse-map (name &rest key/fn-list)
   `(when (not ,name)
-     (let ((map (make-sparse-keymap)))
-       ,@(loop for (key fn) on key/fn-list by #'cddr
-	       collecting `(define-key map (kbd ,key) ',fn))
-       (setq ,name map))))
+     (setq ,name (keys (make-sparse-keymap) ,@key/fn-list))))
 
-(defmacro add-global-keys (&rest key/fn-list)
-  (progn ,@(loop for (key fn) on key/fn-list by #'cddr
-		 collecting `(global-set-key (kbd ,key) ',fn))))
+(defmacro keys (keymap &rest key/fn-list)
+  `(let ((map ,keymap))
+     ,@(loop for (key fn) on key/fn-list by #'cddr
+	     collect `(define-key map (kbd ,key) ',fn))
+     map))
+
+(defmacro hooks (mode-name/s function)
+  (assert (or (symbolp mode-name/s) (listp mode-name/s)))
+  (flet ((to-hook (name) (intern (format "%s-mode-hook" name))))
+    (if (symbolp mode-name/s)
+	`(add-hook ',(to-hook mode-name/s) ,function)
+      (let ((fn (gensym)))
+	`(let ((,fn ,function))
+	   ,@(loop for m in mode-name/s
+		   collect `(add-hook ',(to-hook m) ,fn)))))))
+
+(defmacro by-ext (extension/s mode)
+  (assert (or (stringp extension/s) (listp extension/s)))
+  (flet ((to-reg (ext) (format "\\.%s$" ext)))
+    (if (stringp extension/s)
+	`(add-to-list 'auto-mode-alist '(,(to-reg extension/s) . ,mode))
+      `(progn ,@(loop for ext in extension/s
+		      collect `(add-to-list 'auto-mode-alist 
+					    '(,(to-reg ext) . ,mode)))))))
 
 (defmacro global-mode (mode-name) ;;shortcut for globalizing a minor mode (since I do it more than once)
   (let ((g-name (make-symbol (concat "global-" (symbol-name mode-name)))))
@@ -42,6 +60,16 @@
     (message "%d %s"
 	     (loop for count from 0 do (funcall inc-function) if (eobp) return count)
 	     items)))
- 
+
+;;; Other
+(defun file-nameify-string (a-string)
+  (replace-regexp-in-string
+   " +" "-"
+   (replace-regexp-in-string 
+    "[',`~_\"]" ""
+    (replace-regexp-in-string 
+     "part[ 	]\\([0-9]+\\)" "p\\1" 
+     (downcase a-string))))) 
+
 (provide 'convenience)
 

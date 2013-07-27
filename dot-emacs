@@ -1,0 +1,236 @@
+;; path additions
+(setq inferior-lisp-program "/usr/bin/sbcl"
+      quack-default-program "csi"
+      python-command "python3"
+      erlang-root-dir "/usr/lib/erlang"
+      browse-url-browser-function 'browse-url-generic
+      browse-url-generic-program "conkeror"
+      
+      load-path (append load-path (list "~/.emacs.d" "~/.emacs.d/yasnippet"
+					"~/emacs-utils"
+					"/usr/share/emacs23/site-lisp/sml-mode/"
+					"/usr/lib/erlang/lib/tools-2.6.7/emacs" 
+					"~/nitrogen/support/nitrogen-mode/")))
+
+;; cosmetics
+(setq scroll-bar-mode-explicit t)
+(set-scroll-bar-mode `right)
+
+;; custom modeline
+(setq-default 
+ mode-line-format
+ (list " " 'mode-line-modified			;; the "**" at the beginning
+       "--" 'mode-line-buffer-identification	;; buffer file name
+       "--" 'mode-line-modes			;; major and minor modes in effect
+       'mode-line-position			;; line, column, file %
+       "--" '(:eval (battery-status))
+       "--" '(:eval (temperature))
+       "--" '(:eval (format-time-string "%I:%M" (current-time)))
+       "-%-"))					;; dashes sufficient to fill rest of modeline.
+
+(defun battery-status ()
+  "Outputs the battery percentage from acpi."
+  (replace-regexp-in-string 
+   ".*?\\([0-9]+\\)%.*" " Battery: \\1%% " 
+   (substring (shell-command-to-string "acpi") 0 -1)))
+
+(defun temperature ()
+  (replace-regexp-in-string
+   ".*? \\([0-9\.]+\\) .*" "Temp: \\1°C "
+   (substring (shell-command-to-string "acpi -t") 0 -1)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; general utility
+(require 'convenience) ;; general use elisp macros
+(require 'highlight-parentheses) ;; paren highlighting
+
+(require 'yasnippet)
+(yas/global-mode 1)
+
+(require 'autopair)
+(autopair-global-mode)
+
+;; unique buffer names (for similarly named files in different directories
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'reverse
+      uniquify-separator "/"
+      uniquify-after-kill-buffer-p t ; rename after killing uniquified
+      uniquify-ignore-buffers-re "^\\*") ; don't muck with special buffers
+
+;; external app/in-depth plugins
+(require 'multi-eshell)
+(require 'magit)
+
+;; editing/general convenience addons
+(global-mode highlight-parentheses-mode)
+(global-mode column-number-mode)
+(require 'smart-tab)
+(require 'redo)
+(require 'hideshow)
+(require 'auto-complete-config)
+(hooks (slime common-lisp emacs lisp lisp python haskell)
+       (lambda () (auto-complete-mode t)))
+
+;; blog mode (shortcuts for writing my blog)
+(require 'blog-mode)
+(hooks html 'blog-mode)
+(hooks html 'flyspell-mode)
+(hooks flyspell 'flyspell-buffer)
+(setq flyspell-mode-map 
+      (keys (make-sparse-keymap)
+	    "C-," flyspell-goto-next-error
+	    "C-." flyspell-correct-word-before-point))
+
+;; org mode hooks
+(hooks org
+       (lambda () 
+	 (local-set-key (kbd "C-c t") 'org-todo)
+	 (local-set-key (kbd "<C-tab>") 'other-window)))
+(by-ext "org" org-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; language/markup modes
+(require 'forth-mode "gforth.el")
+(require 'rebol)
+(by-ext "r" rebol-mode)
+
+;;;;;;;;;; Markdown
+(autoload 'markdown-mode "markdown-mode.el" "Major mode for editing Markdown files" t)
+(hooks markdown 
+       (lambda () 
+	 ;; Fuck you, Markdown mode, you don't get to re-bind tab
+	 (setf (cdr (assoc 'tab markdown-mode-map)) 'yas/expand)))
+(by-ext ("md" "text") markdown-mode)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;; Erlang
+(hooks erlang (lambda () (imenu-add-to-menubar "Functions")))
+(require 'erlang-start)
+(require 'erl-custom)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;; Python
+(defun python-reinstate-current-directory ()
+  "When running Python, add the current directory ('') to the head of sys.path.
+For reasons unexplained, run-python passes arguments to the
+interpreter that explicitly remove '' from sys.path. This means
+that, for example, using `python-send-buffer' in a buffer
+visiting a module's code will fail to find other modules in the
+same directory.
+
+Adding this function to `inferior-python-mode-hook' reinstates
+the current directory in Python's search path."
+  (python-send-string "sys.path[0:0] = ['']"))
+
+(hooks inferior-python 'python-reinstate-current-directory)
+
+(hooks python
+       (lambda ()
+	 (setq autopair-handle-action-fns
+	       (list #'autopair-default-handle-action
+		     #'autopair-python-triple-quote-action))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;; Elm
+(require 'two-mode-mode)
+(setq default-mode (list "Haskell" 'haskell-mode)
+      second-modes (list (list "Markdown" "\[markdown|" "|\]" 'markdown-mode)))
+
+(by-ext "elm" haskell-mode)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;; Haskell
+(require 'ha-custom)
+(require 'scion)
+(setq scion-program "~/.cabal/bin/scion-server")
+;; WARNING: This causes some versions of Emacs to fail so badly
+;; that Emacs needs to be restarted.
+(setq scion-completing-read-function 'ido-completing-read)
+(hooks haskell
+       (lambda ()
+	 (progn (local-set-key (kbd "C-c l") 'ha-custom-lint)
+		(local-set-key (kbd "C-c h") 'ha-custom-hoogle-search)
+		(local-set-key (kbd "C-c C-h") 'ha-custom-hoogle-doc)
+		(scion-mode 1)
+		(scion-flycheck-on-save 1))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;; Lisp -- SLIME, installed via (ql:quickload :quicklisp-slime-helper)
+(load (expand-file-name "~/quicklisp/slime-helper.el"))
+
+(autoload 'paredit-mode "paredit"
+  "Minor mode for pseudo-structurally editing Lisp code." t)
+
+(defun custom-paredit-mode ()
+  (progn (paredit-mode +1) 
+	 (define-key paredit-mode-map (kbd "<C-left>") 'backward-sexp)
+	 (define-key paredit-mode-map (kbd "<C-right>") 'forward-sexp)))
+
+(hooks (common-lisp lisp emacs-lisp scheme lisp-interaction slime)
+       (lambda ()
+	      (custom-paredit-mode)
+	      (setq autopair-dont-activate t)
+	      (autopair-mode -1)))
+
+(modify-syntax-entry ?\[ "($" lisp-mode-syntax-table)
+(modify-syntax-entry ?\] ")^" lisp-mode-syntax-table)
+(modify-syntax-entry ?\{ "($" lisp-mode-syntax-table)
+(modify-syntax-entry ?\} ")^" lisp-mode-syntax-table)
+
+(require 'quack)
+(by-ext "ss" scheme-mode)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; global key changes
+(keys (current-global-map)
+      "C-x C-m" execute-extended-command
+      "C-x C-w" kill-ring-save
+      "C-w" backward-kill-sexp
+
+      "<f7>" call-last-kbd-macro
+      "C-S-z" redo
+      "C-z" undo
+      "<C-tab>" other-window
+      "C-s" isearch-forward-regexp
+      "C-r" isearch-backward-regexp
+      "C-M-c" clipboard-kill-ring-save
+      "C-x C-x" clipboard-kill-region
+      "C-x C-" comment-or-uncomment-region
+      "C-x C-g" comment-or-uncomment-region
+      "C-x t" multi-eshell
+      "C-x f" browse-url-at-point
+      "C-c RET" macroexpand-point
+
+      "<C-mouse-4>" text-scale-increase ;; mouse-4 is Scroll-Wheel Up
+      "<C-mouse-5>" text-scale-decrease ;; mouse-5 is Scroll-Wheel Down
+
+      "<C-left>" backward-sexp
+      "<C-right>" forward-sexp)
+
+(custom-set-variables
+  ;; custom-set-variables was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ '(blog-default-blogger-title "language agnostic")
+ '(blog-default-blogger-user (quote leo\.zovic@gmail\.com))
+ '(htmlize-output-type (quote inline-css))
+ '(iswitchb-mode t)
+ '(lpr-command "lp")
+ '(machine-addresses (quote ("ingram@192.168.2.18" "ingram@192.168.2.19" "ingram@192.168.2.16" "git@orphan" "repos@jupiter")))
+ '(magit-process-connection-type t)
+ '(magit-revert-item-confirm nil)
+ '(menu-bar-mode nil)
+ '(newsticker-url-list (quote (("StackExchange Digest" "http://stackexchange.com/feeds/tagsets/43442/inaimathi-lang-digests?sort=active" nil nil nil) ("Groklaw" "http://www.groklaw.net/backend/GrokLaw.rdf" nil nil nil))))
+ '(org-log-done (quote note))
+ '(quack-programs (quote ("cis" "bigloo" "csi" "csi -hygienic" "gosh" "gsi" "gsi ~~/syntax-case.scm -" "guile" "kawa" "mit-scheme" "mred -z" "mzscheme" "mzscheme -il r6rs" "mzscheme -il typed-scheme" "mzscheme -M errortrace" "mzscheme3m" "mzschemecgc" "rs" "scheme" "scheme48" "scsh" "sisc" "stklos" "sxi")))
+ '(show-paren-mode t)
+ '(tool-bar-mode nil)
+ '(transient-mark-mode t))
+(put 'downcase-region 'disabled nil)
+(custom-set-faces
+  ;; custom-set-faces was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
+ )
+
+(put 'upcase-region 'disabled nil)
