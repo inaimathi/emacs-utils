@@ -8,14 +8,19 @@
   (with-current-buffer "*el-macroexpansion*" (emacs-lisp-mode)))
 
 ;;; key and mode declaration shortcuts
-(defmacro def-sparse-map (name &rest key/fn-list)
-  `(when (not ,name)
-     (setq ,name (keys (make-sparse-keymap) ,@key/fn-list))))
+(defmacro def-sparse-map (name/doc &rest key/fn-list)
+  (assert (and (listp name/doc)
+	       (symbolp (first name/doc))
+	       (or (not (second name/doc))
+		   (stringp (second name/doc)))))
+  `(defvar ,(first name/doc)
+     (keys (make-sparse-keymap) ,@key/fn-list)
+     ,@(cdr name/doc)))
 
 (defmacro keys (keymap &rest key/fn-list)
   `(let ((map ,keymap))
      ,@(loop for (key fn) on key/fn-list by #'cddr
-	     collect `(define-key map (kbd ,key) ',fn))
+	     collect `(define-key map (kbd ,key) ,fn))
      map))
 
 (defmacro hooks (mode-name/s function)
