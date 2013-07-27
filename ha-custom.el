@@ -33,7 +33,7 @@ the filename of the profiling output."
 	 (tmp-name (file-name-nondirectory tmp))
 	 (tmp-dir (file-name-directory tmp)))
     (message "Compiling...")
-    (shell-command (format "ghc -prof -auto-all -o %s '%s'" tmp abs-filename))
+    (shell-command (format "ghc -prof -auto-all -O2 -o %s '%s'" tmp abs-filename))
     (message "Profiling...")
     (shell-command (format "%s./%s +RTS -p" tmp-dir tmp-name))
     (concat tmp-name ".prof")))
