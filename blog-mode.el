@@ -59,8 +59,6 @@
   (query-replace-regexp " (\\(.\\)\\(.*\\))" (upcase "\\1\\2.")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (define-minor-mode blog-mode
   "This is a collection of useful keyboard macros for editing Langnostic"
   nil
