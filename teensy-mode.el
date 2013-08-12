@@ -1,13 +1,10 @@
 (require 'convenience)
 
-(defvar teensy-mode-map nil
-  "Keymap for Teensy development minor mode")
-
-(def-sparse-map teensy-mode-map
-  "C-c C-c" teensy-compile-current-file
-  "C-c C-v" teensy-compile-project
-  "C-c C-l" teensy-load-hex-file
-  "C-c C-k" teensy-compile-project-load-file)
+(def-sparse-map (teensy-mode-map "Keymap for compiling/programming Teensy boards")
+  "C-c C-c" 'teensy-compile-current-file
+  "C-c C-v" 'teensy-compile-project
+  "C-c C-l" 'teensy-load-hex-file
+  "C-c C-k" 'teensy-compile-project-load-file)
 
 (define-minor-mode teensy-mode
   "A collection of keyboard shortcuts geared for the Teensy USB development board"

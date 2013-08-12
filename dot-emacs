@@ -1,3 +1,4 @@
+;;;; -*- mode: emacs-lisp; -*-
 ;; path additions
 (setq inferior-lisp-program "/usr/bin/sbcl"
       quack-default-program "csi"
@@ -6,7 +7,9 @@
       browse-url-generic-program "conkeror"
       
       load-path (append load-path (list "~/.emacs.d" "~/.emacs.d/yasnippet"
+					"~/.emacs.d/slime-2013-04-05/"
 					"~/emacs-utils"
+					"~/projects/r3-mode"
 					"/usr/share/emacs23/site-lisp/sml-mode/")))
 
 ;; cosmetics
@@ -74,8 +77,8 @@
 (hooks flyspell 'flyspell-buffer)
 (setq flyspell-mode-map 
       (keys (make-sparse-keymap)
-	    "C-," flyspell-goto-next-error
-	    "C-." flyspell-correct-word-before-point))
+	    "C-," 'flyspell-goto-next-error
+	    "C-." 'flyspell-correct-word-before-point))
 
 ;; org mode hooks
 (hooks org
@@ -86,8 +89,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; language/markup modes
 (require 'forth-mode "gforth.el")
-(require 'rebol)
-(by-ext "r" rebol-mode)
+(autoload 'r3-mode "r3-mode.el" "Major mode for REBOL3 development" t)
+(by-ext "r" r3-mode)
 
 ;;;;;;;;;; Markdown
 (autoload 'markdown-mode "markdown-mode.el" "Major mode for editing Markdown files" t)
@@ -137,15 +140,18 @@ the current directory in Python's search path."
 (setq scion-completing-read-function 'ido-completing-read)
 (hooks haskell
        (lambda ()
-	 (progn (local-set-key (kbd "C-c l") 'ha-custom-lint)
-		(local-set-key (kbd "C-c h") 'ha-custom-hoogle-search)
-		(local-set-key (kbd "C-c C-h") 'ha-custom-hoogle-doc)
+	 (progn (keys (current-local-map)
+		      "C-c l" 'ha-custom-lint
+		      "C-c h" 'ha-custom-hoogle-search
+		      "C-c C-h" 'ha-custom-hoogle-doc)
 		(scion-mode 1)
 		(scion-flycheck-on-save 1))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;; Lisp -- SLIME, installed via (ql:quickload :quicklisp-slime-helper)
-(load (expand-file-name "~/quicklisp/slime-helper.el"))
+;;;;;;;;;; Lisp
+;; (load (expand-file-name "~/quicklisp/slime-helper.el"))
+(require 'slime)
+(slime-setup '(slime-fancy))
 
 (autoload 'paredit-mode "paredit"
   "Minor mode for pseudo-structurally editing Lisp code." t)
@@ -157,14 +163,20 @@ the current directory in Python's search path."
 
 (hooks (common-lisp lisp emacs-lisp scheme lisp-interaction slime)
        (lambda ()
-	      (custom-paredit-mode)
-	      (setq autopair-dont-activate t)
-	      (autopair-mode -1)))
+	 (custom-paredit-mode)
+	 (setq autopair-dont-activate t)
+	 (autopair-mode -1)))
 
 (modify-syntax-entry ?\[ "($" lisp-mode-syntax-table)
 (modify-syntax-entry ?\] ")^" lisp-mode-syntax-table)
 (modify-syntax-entry ?\{ "($" lisp-mode-syntax-table)
 (modify-syntax-entry ?\} ")^" lisp-mode-syntax-table)
+
+(hooks emacs-lisp
+       (lambda ()
+	 (keys (current-local-map)
+	       "C-c RET" 'macroexpand-point
+	       "C-c C-c" 'eval-defun)))
 
 (require 'quack)
 (by-ext "ss" scheme-mode)
@@ -172,29 +184,28 @@ the current directory in Python's search path."
 
 ;; global key changes
 (keys (current-global-map)
-      "C-x C-m" execute-extended-command
-      "C-x C-w" kill-ring-save
-      "C-w" backward-kill-sexp
+      "C-x C-m" 'execute-extended-command
+      "C-x C-w" 'kill-ring-save
+      "C-w" 'backward-kill-sexp
 
-      "<f7>" call-last-kbd-macro
-      "C-S-z" redo
-      "C-z" undo
-      "<C-tab>" other-window
-      "C-s" isearch-forward-regexp
-      "C-r" isearch-backward-regexp
-      "C-M-c" clipboard-kill-ring-save
-      "C-x C-x" clipboard-kill-region
-      "C-x C-" comment-or-uncomment-region
-      "C-x C-g" comment-or-uncomment-region
-      "C-x t" multi-eshell
-      "C-x f" browse-url-at-point
-      "C-c RET" macroexpand-point
+      "<f7>" 'call-last-kbd-macro
+      "C-S-z" 'redo
+      "C-z" 'undo
+      "<C-tab>" 'other-window
+      "C-s" 'isearch-forward-regexp
+      "C-r" 'isearch-backward-regexp
+      "C-M-c" 'clipboard-kill-ring-save
+      "C-x C-x" 'clipboard-kill-region
+      "C-x C-'" 'comment-or-uncomment-region
+      "C-x C-g" 'comment-or-uncomment-region
+      "C-x t" 'multi-eshell
+      "C-x f" 'browse-url-at-point
 
-      "<C-mouse-4>" text-scale-increase ;; mouse-4 is Scroll-Wheel Up
-      "<C-mouse-5>" text-scale-decrease ;; mouse-5 is Scroll-Wheel Down
+      "<C-mouse-4>" 'text-scale-increase ;; mouse-4 is Scroll-Wheel Up
+      "<C-mouse-5>" 'text-scale-decrease ;; mouse-5 is Scroll-Wheel Down
 
-      "<C-left>" backward-sexp
-      "<C-right>" forward-sexp)
+      "<C-left>" 'backward-sexp
+      "<C-right>" 'forward-sexp)
 
 (custom-set-variables
   ;; custom-set-variables was added by Custom.
@@ -206,13 +217,12 @@ the current directory in Python's search path."
  '(htmlize-output-type (quote inline-css))
  '(iswitchb-mode t)
  '(lpr-command "lp")
- '(machine-addresses (quote ("ingram@192.168.2.18" "ingram@192.168.2.19" "ingram@192.168.2.16" "git@orphan" "repos@jupiter")))
  '(magit-process-connection-type t)
  '(magit-revert-item-confirm nil)
  '(menu-bar-mode nil)
- '(newsticker-url-list (quote (("StackExchange Digest" "http://stackexchange.com/feeds/tagsets/43442/inaimathi-lang-digests?sort=active" nil nil nil) ("Groklaw" "http://www.groklaw.net/backend/GrokLaw.rdf" nil nil nil))))
  '(org-log-done (quote note))
  '(quack-programs (quote ("cis" "bigloo" "csi" "csi -hygienic" "gosh" "gsi" "gsi ~~/syntax-case.scm -" "guile" "kawa" "mit-scheme" "mred -z" "mzscheme" "mzscheme -il r6rs" "mzscheme -il typed-scheme" "mzscheme -M errortrace" "mzscheme3m" "mzschemecgc" "rs" "scheme" "scheme48" "scsh" "sisc" "stklos" "sxi")))
+ '(r3-rebol-command "/home/inaimathi/projects-work/r3/make/r3")
  '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(transient-mark-mode t))

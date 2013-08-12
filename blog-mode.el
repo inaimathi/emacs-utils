@@ -8,52 +8,48 @@
   "Commonly used (for blogging purposes) spechial characters."
   :group 'blog-mode)
 
-(defvar blog-mode-special-char-map nil
-  "Character insertion submap for Blog Mode")
-
 (defun insert-special (char)
   `(lambda ()
      (interactive)
      (insert ,(getf blog-special-chars char))))
 
-(let ((map (make-sparse-keymap)))
-  (define-key map (kbd "c") (insert-special :copyright))
-  (define-key map (kbd "t") (insert-special :trademark))
-  (define-key map (kbd "r") (insert-special :registered))
-  (define-key map (kbd "l") (insert-special :lambda))
-  (setf blog-mode-special-char-map map))
+(def-sparse-map 
+  (blog-mode-special-char-map 
+   "Character insertion submap for Blog Mode")
+  "c" (insert-special :copyright)
+  "t" (insert-special :trademark)
+  "r" (insert-special :registered)
+  "l" (insert-special :lambda))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymap and other customs
 
-(defvar blog-mode-map nil
-  "Keymap for blog minor mode")
-(let ((map (make-sparse-keymap))) 
-  (define-key map (kbd "C-c s") blog-mode-special-char-map)
-  (define-key map (kbd "C-c l") 'insert-link)
-  (define-key map (kbd "C-c p") 'insert-code-block)
-  (define-key map (kbd "C-c c") 'insert-inline-code)
-  (define-key map (kbd "C-c b") 'insert-bold)
-  (define-key map (kbd "C-c i") 'insert-italic)
-  (define-key map (kbd "C-c q") 'insert-complete-quote)
-  (define-key map (kbd "C-c f") 'insert-footnote)
-  (define-key map (kbd "C-c e") 'insert-edit)
-  (define-key map (kbd "C-c n") 'insert-note)  
+(def-sparse-map (blog-mode-map "Keymap for blog minor mode")
+  "C-c s" blog-mode-special-char-map
+  "C-c l" 'insert-link
+  "C-c p" 'insert-code-block
+  "C-c c" 'insert-inline-code
+  "C-c b" 'insert-bold
+  "C-c i" 'insert-italic
+  "C-c q" 'insert-complete-quote
+  "C-c f" 'insert-footnote
+  "C-c e" 'insert-edit
+  "C-c n" 'insert-note  
   
-  (define-key map (kbd "C-c C-l") 'region-to-link)
-  (define-key map (kbd "C-c C-p") 'region-to-code-block)
-  (define-key map (kbd "C-c C-c") 'region-to-inline-code)
-  (define-key map (kbd "C-c C-b") 'region-to-bold)
-  (define-key map (kbd "C-c C-i") 'region-to-italic)
-  (define-key map (kbd "C-c C-q") 'region-to-complete-quote)
-  (define-key map (kbd "C-c C-f") 'region-to-footnote)
-  (define-key map (kbd "C-c C-e") 'region-to-edit)
-  (define-key map (kbd "C-c C-n") 'region-to-note)
+  "C-c C-l" 'region-to-link
+  "C-c C-p" 'region-to-code-block
+  "C-c C-c" 'region-to-inline-code
+  "C-c C-b" 'region-to-bold
+  "C-c C-i" 'region-to-italic
+  "C-c C-q" 'region-to-complete-quote
+  "C-c C-f" 'region-to-footnote
+  "C-c C-e" 'region-to-edit
+  "C-c C-n" 'region-to-note
+  "C-c C-s" 'region-to-strikethru
   
-  (define-key map (kbd "C-c RET") 'blog-html-paragraph)
-  (define-key map (kbd "C-c g") 'html-escape-region)
-  (define-key map (kbd "/") 'smart-backslash)
-  (define-key map (kbd ">") 'smart-brace)
-  (setq blog-mode-map map))
+  "C-c RET" 'blog-html-paragraph
+  "C-c g" 'html-escape-region
+  "/" 'smart-backslash
+  ">" 'smart-brace)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Temp function until I put together a proper footnote system
@@ -70,6 +66,7 @@
   nil
   " Blog"
   (use-local-map blog-mode-map))
+
 
 (defgroup blog-mode nil
   "Custom extensions to HTML mode geared towards blogging"
@@ -245,25 +242,23 @@ Warning: SLOW AS FUCK"
 		      (search-forward "<a href=\"#note-" nil t)))
 	count))))
 
+(defun get-htmlified-region (start end &optional code-mode)
+  "Returns a string of the current region HTMLized with highlighting according to code-mode"
+  (clipboard-kill-ring-save start end)
+  (get-buffer-create "*blog-mode-temp*") ;;using 'with-temp-buffer here doesn't apply correct higlighting
+  (let ((htmlified 
+	 (with-current-buffer "*blog-mode-temp*"
+	   (if (fboundp code-mode) 
+	       (funcall code-mode)
+	     (progn (fundamental-mode)
+		    (font-lock-fontify-buffer)))
+	   (clipboard-yank)
+	   (substring (htmlize-region-for-paste (point-min) (point-max)) 6 -6))))
+    (kill-buffer "*blog-mode-temp*")
+    htmlified))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; utility and general primitives
 (defregion strikethru "<span style=\"text-decoration: line-through;\">" "</span>")
-
-(defun smart-backslash ()
-  "Backslash closes previous tag when used in the combination </. Self-inserts otherwise."
-  (interactive)
-  (if (equal (save-excursion (backward-char) (thing-at-point 'char)) "<")
-      (progn (backward-delete-char 1)
-	     (delete-char 1)
-	     (sgml-close-tag))
-    (insert "/")))
-
-(defun smart-brace ()
-  "Closing pointy brace closes SGML tag."
-  (interactive)
-  (cond ((equal ">" (thing-at-point 'char)) (forward-char))
-	((equal ">" (save-excursion (backward-char) (thing-at-point 'char))) nil)
-	(t (insert ">")))
-  (save-excursion (sgml-close-tag)))
 
 ;;; line converters (these are specific enough that I don't assign hotkeys, just use the M-x command)
 (defun region-to-paragraphs ()
@@ -300,20 +295,5 @@ Warning: SLOW AS FUCK"
   "Function mostly used for escaping .DOCs from marketing for use in HTML"
   (interactive)
   (htmlized-region nil #'insert))
-
-(defun get-htmlified-region (start end &optional code-mode)
-  "Returns a string of the current region HTMLized with highlighting according to code-mode"
-  (let ((htmlified nil))
-    (clipboard-kill-ring-save start end)
-    (get-buffer-create "*blog-mode-temp*") ;;using 'with-temp-buffer here doesn't apply correct higlighting
-    (with-current-buffer "*blog-mode-temp*"
-      (when (fboundp code-mode) (funcall code-mode))
-      (clipboard-yank)
-      (unless code-mode 
-	(fundamental-mode)
-	(font-lock-fontify-buffer))
-      (setq htmlified (substring (htmlize-region-for-paste (point-min) (point-max)) 6 -6)))
-    (kill-buffer "*blog-mode-temp*")
-    htmlified))
 
 (provide 'blog-mode)

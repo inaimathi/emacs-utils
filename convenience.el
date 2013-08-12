@@ -1,8 +1,29 @@
 (require 'cl)
 
 ;;; lisp basics
+(defun flash-region (start end &optional timeout)
+  "Temporarily highlight region from START to END. Ripped bleeding from SLIME."
+  (let ((overlay (make-overlay start end))) 
+    (overlay-put overlay 'face 'secondary-selection)
+    (run-with-timer (or timeout 0.2) nil 'delete-overlay overlay)))
+
+(defun flash-defun-at-point ()
+  (interactive)
+  (save-excursion
+    (let ((start (progn (beginning-of-defun) (point)))
+	  (end (progn (end-of-defun) (point))))
+      (flash-region start end))))
+
+(defun flash-sexp-at-point ()
+  (interactive)
+  (let* ((bounds (bounds-of-thing-at-point 'sexp))
+	 (start (car bounds))
+	 (end (cdr bounds)))
+    (flash-region start end)))
+
 (defun macroexpand-point (sexp)
   (interactive (list (sexp-at-point)))
+  (flash-sexp-at-point)
   (with-output-to-temp-buffer "*el-macroexpansion*"
     (pp (macroexpand sexp)))
   (with-current-buffer "*el-macroexpansion*" (emacs-lisp-mode)))
