@@ -201,8 +201,11 @@ the current directory in Python's search path."
       "C-x t" 'multi-eshell
       "C-x f" 'browse-url-at-point
 
+      ;; for an older emacs version
       "<C-mouse-4>" 'text-scale-increase ;; mouse-4 is Scroll-Wheel Up
       "<C-mouse-5>" 'text-scale-decrease ;; mouse-5 is Scroll-Wheel Down
+      "<C-wheel-up>" 'text-scale-increase
+      "<C-wheel-down>" 'text-scale-decrease
 
       "<C-left>" 'backward-sexp
       "<C-right>" 'forward-sexp)
