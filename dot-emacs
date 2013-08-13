@@ -41,7 +41,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; general utility
 (require 'convenience) ;; general use elisp macros
-(require 'highlight-parentheses) ;; paren highlighting
+(require 'highlight-parentheses)
 
 (require 'yasnippet)
 (yas/global-mode 1)
@@ -225,7 +225,6 @@ the current directory in Python's search path."
  '(menu-bar-mode nil)
  '(org-log-done (quote note))
  '(quack-programs (quote ("cis" "bigloo" "csi" "csi -hygienic" "gosh" "gsi" "gsi ~~/syntax-case.scm -" "guile" "kawa" "mit-scheme" "mred -z" "mzscheme" "mzscheme -il r6rs" "mzscheme -il typed-scheme" "mzscheme -M errortrace" "mzscheme3m" "mzschemecgc" "rs" "scheme" "scheme48" "scsh" "sisc" "stklos" "sxi")))
- '(r3-rebol-command "/home/inaimathi/projects-work/r3/make/r3")
  '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(transient-mark-mode t))
