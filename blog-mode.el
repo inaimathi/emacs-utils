@@ -1,5 +1,5 @@
 (require 'cl)
-;; (require 'htmlize)
+(require 'htmlize)
 (require 'convenience)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; special character related
