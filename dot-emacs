@@ -1,16 +1,12 @@
-;;;; -*- mode: emacs-lisp; -*-
-;; path additions
-(setq inferior-lisp-program "/usr/bin/sbcl"
-      quack-default-program "csi"
-      python-command "python3"
-      browse-url-browser-function 'browse-url-generic
-      browse-url-generic-program "conkeror"
-      
-      load-path (append load-path (list "~/.emacs.d" "~/.emacs.d/yasnippet"
-					"~/.emacs.d/slime-2013-04-05/"
-					"~/emacs-utils"
-					"~/projects/r3-mode"
-					"/usr/share/emacs23/site-lisp/sml-mode/")))
+;; Requiring convenience early 'cause I like having sugar to deal with load path.
+(add-to-list 'load-path "~/projects/emacs-utils")
+(require 'convenience)
+
+(setq inferior-lisp-program "sbcl")
+(add-to-load-path (list-subdirectories "~/.emacs.d/elpa"))
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 
 ;; cosmetics
 (setq scroll-bar-mode-explicit t)
@@ -40,9 +36,7 @@
    (substring (shell-command-to-string "acpi -t") 0 -1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; general utility
-(require 'convenience) ;; general use elisp macros
 (require 'highlight-parentheses)
-
 (require 'yasnippet)
 (yas/global-mode 1)
 
@@ -56,18 +50,14 @@
       uniquify-after-kill-buffer-p t ; rename after killing uniquified
       uniquify-ignore-buffers-re "^\\*") ; don't muck with special buffers
 
-;; external app/in-depth plugins
-(require 'multi-eshell)
-(require 'magit)
-
 ;; editing/general convenience addons
 (global-mode highlight-parentheses-mode)
 (global-mode column-number-mode)
 (require 'smart-tab)
-(require 'redo)
+(require 'redo+)
 (require 'hideshow)
 (require 'auto-complete-config)
-(hooks (slime common-lisp emacs lisp lisp python haskell)
+(hooks (slime common-lisp emacs-lisp lisp python haskell)
        (lambda () (auto-complete-mode t)))
 
 ;; blog mode (shortcuts for writing my blog)
@@ -88,7 +78,6 @@
 (by-ext "org" org-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; language/markup modes
-(require 'forth-mode "gforth.el")
 (autoload 'r3-mode "r3-mode.el" "Major mode for REBOL3 development" t)
 (by-ext "r" r3-mode)
 
@@ -124,33 +113,16 @@ the current directory in Python's search path."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;; Elm
-(require 'two-mode-mode)
-(setq default-mode (list "Haskell" 'haskell-mode)
-      second-modes (list (list "Markdown" "\[markdown|" "|\]" 'markdown-mode)))
+;;; TODO get MMM working here instead of two-mode-mode
+;; (require 'two-mode-mode)
+;; (setq default-mode (list "Haskell" 'haskell-mode)
+   ;;   second-modes (list (list "Markdown" "\[markdown|" "|\]" 'markdown-mode)))
 
 (by-ext "elm" haskell-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;; Haskell
-(require 'ha-custom)
-(require 'scion)
-(setq scion-program "~/.cabal/bin/scion-server")
-;; WARNING: This causes some versions of Emacs to fail so badly
-;; that Emacs needs to be restarted.
-(setq scion-completing-read-function 'ido-completing-read)
-(hooks haskell
-       (lambda ()
-	 (progn (keys (current-local-map)
-		      "C-c l" 'ha-custom-lint
-		      "C-c h" 'ha-custom-hoogle-search
-		      "C-c C-h" 'ha-custom-hoogle-doc)
-		(scion-mode 1)
-		(scion-flycheck-on-save 1))))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;;;;;;;;;; Lisp
-;; (load (expand-file-name "~/quicklisp/slime-helper.el"))
-(require 'slime)
+(load (expand-file-name "~/quicklisp/slime-helper.el"))
 (slime-setup '(slime-fancy))
 
 (autoload 'paredit-mode "paredit"
@@ -178,8 +150,7 @@ the current directory in Python's search path."
 	       "C-c RET" 'macroexpand-point
 	       "C-c C-c" 'eval-defun)))
 
-(require 'quack)
-(by-ext "ss" scheme-mode)
+(by-ext ("ss" "scm" "rkt") scheme-mode)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; global key changes
@@ -201,14 +172,18 @@ the current directory in Python's search path."
       "C-x t" 'multi-eshell
       "C-x f" 'browse-url-at-point
 
-      ;; for an older emacs version
       "<C-mouse-4>" 'text-scale-increase ;; mouse-4 is Scroll-Wheel Up
       "<C-mouse-5>" 'text-scale-decrease ;; mouse-5 is Scroll-Wheel Down
       "<C-wheel-up>" 'text-scale-increase
       "<C-wheel-down>" 'text-scale-decrease
 
+
       "<C-left>" 'backward-sexp
-      "<C-right>" 'forward-sexp)
+      "<C-right>" 'forward-sexp
+      "C-f" 'forward-sexp
+      "C-b" 'backward-sexp
+      "C-M-b" 'backward-char
+      "C-M-f" 'forward-char)
 
 (custom-set-variables
   ;; custom-set-variables was added by Custom.
@@ -224,7 +199,7 @@ the current directory in Python's search path."
  '(magit-revert-item-confirm nil)
  '(menu-bar-mode nil)
  '(org-log-done (quote note))
- '(quack-programs (quote ("cis" "bigloo" "csi" "csi -hygienic" "gosh" "gsi" "gsi ~~/syntax-case.scm -" "guile" "kawa" "mit-scheme" "mred -z" "mzscheme" "mzscheme -il r6rs" "mzscheme -il typed-scheme" "mzscheme -M errortrace" "mzscheme3m" "mzschemecgc" "rs" "scheme" "scheme48" "scsh" "sisc" "stklos" "sxi")))
+ '(quack-programs (quote ("racket" "bigloo" "cis" "csi" "csi -hygienic" "gosh" "gsi" "guile" "kawa" "mit-scheme" "mred -z" "mzscheme" "mzscheme -M errortrace" "mzscheme -il r6rs" "mzscheme -il typed-scheme" "mzscheme3m" "mzschemecgc" "rs" "scheme" "scheme48" "scsh" "sisc" "stklos" "sxi")))
  '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(transient-mark-mode t))
