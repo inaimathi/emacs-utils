@@ -28,6 +28,19 @@
     (pp (macroexpand sexp)))
   (with-current-buffer "*el-macroexpansion*" (emacs-lisp-mode)))
 
+;;; Dealing with directories
+(defun starts-with-dot-p (path)
+  (= (aref path 0) ?.))
+
+(defun list-subdirectories (path)
+  (let ((all (mapcar 
+	      (lambda (name) (concat (file-name-as-directory path) name))
+	      (remove-if #'starts-with-dot-p (directory-files path)))))
+    (remove-if-not #'file-directory-p all)))
+
+(defun add-to-load-path (dirs)
+  (mapc (lambda (p) (add-to-list 'load-path p)) dirs))
+
 ;;; key and mode declaration shortcuts
 (defmacro def-sparse-map (name/doc &rest key/fn-list)
   (assert (and (listp name/doc)

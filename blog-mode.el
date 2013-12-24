@@ -1,5 +1,5 @@
 (require 'cl)
-(require 'htmlize)
+;; (require 'htmlize)
 (require 'convenience)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; special character related
@@ -120,6 +120,28 @@ Warning: SLOW AS FUCK"
   (shell-command (format "google -u '%s' blogger --blog='%s' list" blogger-user blogger-blog-title)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; simple definitions
+(defun previous-char ()
+  (save-excursion
+    (backward-char)
+    (current-char)))
+
+(defun current-char ()
+  (aref (thing-at-point 'char) 0))
+
+(defun smart-backslash ()
+  (interactive)
+  (cond ((and 
+	  (= (current-char) ?>)
+	  (= (previous-char) ?<))
+	 (delete-char 1)
+	 (delete-char -1)
+	 (sgml-close-tag))
+	((= (current-char) ?>)
+	 (delete-char 1)
+	 (sgml-close-tag))
+	(t
+	 (insert "/"))))
+
 (defmacro definsert (tag-name start-tag end-tag)
   "Defines function to insert tag surrounding point."
   `(defun ,(make-symbol (concat "insert-" (symbol-name tag-name))) ()
